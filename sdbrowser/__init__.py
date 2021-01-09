@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 
 #__init__ file for Stage 1, which is only intended to be able to
 #use SPARQLWrapper successfully in some way.
@@ -17,5 +17,13 @@ def create_app():
     @app.route('/test')
     def hello():
         return 'Hello, World!'
+        
+    @app.route('/query/<q>')
+    def query(q):
+        return q
+        
+    @app.route('/interface', methods = ('GET', 'POST'))
+    def interface():
+        return render_template('interface.html')
             
     return app

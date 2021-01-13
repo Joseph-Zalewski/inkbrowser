@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+from SPARQLWrapper import SPARQLWrapper, JSON
 
 #__init__ file for Stage 1, which is only intended to be able to
 #use SPARQLWrapper successfully in some way.
@@ -24,6 +25,19 @@ def create_app():
         
     @app.route('/interface', methods = ('GET', 'POST'))
     def interface():
-        return render_template('interface.html')
+        if request.method == 'POST':
+            
+            endpoint = request.form['endpoint']
+            query = request.form['query']
+            wrapper = SPARQLWrapper(endpoint)
+            wrapper.setQuery(query)
+            wrapper.setReturnFormat(JSON)
+            results = wrapper.query().convert()
+            message = "Results: "
+            for result in results["results"]["bindings"]:
+                message = message + result["label"]["value"]
+        else:
+            message = ''
+        return render_template('interface.html', message=message)
             
     return app

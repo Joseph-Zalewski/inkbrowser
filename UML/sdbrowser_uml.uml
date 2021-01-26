@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<XPD:PROJECT xmlns:XPD="http://www.staruml.com" version="1">
+<XPD:HEADER>
+<XPD:SUBUNITS>
+</XPD:SUBUNITS>
+<XPD:PROFILES>
+</XPD:PROFILES>
+</XPD:HEADER>
+<XPD:BODY>
+<XPD:OBJ name="DocumentElement" type="UMLProject" guid="NvC49PurMkCtCQ9GrD6WhgAA">
+<XPD:ATTR name="Title" type="string">Untitled</XPD:ATTR>
+<XPD:ATTR name="#OwnedElements" type="integer">1</XPD:ATTR>
+<XPD:OBJ name="OwnedElements[0]" type="UMLModel" guid="bQakug+Kf0+Tmp6HzalutQAA">
+<XPD:ATTR name="Name" type="string">pseudoclassmodel</XPD:ATTR>
+<XPD:REF name="Namespace">NvC49PurMkCtCQ9GrD6WhgAA</XPD:REF>
+<XPD:ATTR name="#OwnedDiagrams" type="integer">1</XPD:ATTR>
+<XPD:OBJ name="OwnedDiagrams[0]" type="UMLClassDiagram" guid="C8ue6mog8ESIha/f9XOphwAA">
+<XPD:ATTR name="Name" type="string">main</XPD:ATTR>
+<XPD:REF name="DiagramOwner">bQakug+Kf0+Tmp6HzalutQAA</XPD:REF>
+<XPD:OBJ name="DiagramView" type="UMLClassDiagramView" guid="LyuwtFwu8k+NLp1jlbYENwAA">
+<XPD:REF name="Model">C8ue6mog8ESIha/f9XOphwAA</XPD:REF>
+<XPD:REF name="Diagram">C8ue6mog8ESIha/f9XOphwAA</XPD:REF>
+<XPD:ATTR name="#OwnedViews" type="integer">2</XPD:ATTR>
+<XPD:OBJ name="OwnedViews[0]" type="UMLSubsystemView" guid="fRlJJYvMF0O/zZPNhHELdgAA">
+<XPD:ATTR name="LineColor" type="string">clMaroon</XPD:ATTR>
+<XPD:ATTR name="FillColor" type="string">$00B9FFFF</XPD:ATTR>
+<XPD:ATTR name="Left" type="integer">28</XPD:ATTR>
+<XPD:ATTR name="Top" type="integer">24</XPD:ATTR>
+<XPD:ATTR name="Width" type="integer">453</XPD:ATTR>
+<XPD:ATTR name="Height" type="integer">376</XPD:ATTR>
+<XPD:REF name="Model">OHBSyFb16EmVIkwekRqZnwAA</XPD:REF>
+<XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="UurqkC5UgkKBC+O9XP9CVgAA">
+<XPD:OBJ name="NameLabel" type="LabelView" guid="Jjqx6ioUiUqAlMzcUFodfQAA">
+<XPD:ATTR name="FontStyle" type="integer">1</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">Javascript Side</XPD:ATTR>
+</XPD:OBJ>
+<XPD:OBJ name="StereotypeLabel" type="LabelView" guid="tNkIHy94k0Ctp4tibhcsAwAA">
+<XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
+</XPD:OBJ>
+<XPD:OBJ name="PropertyLabel" type="LabelView" guid="5UinMUdyH06l7fev9t96JwAA">
+<XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
+</XPD:OBJ>
+</XPD:OBJ>
+<XPD:OBJ name="OperationCompartment" type="UMLOperationCompartmentView" guid="PfyiWkpJ/0y6vo8XtazDDgAA">
+<XPD:REF name="Model">OHBSyFb16EmVIkwekRqZnwAA</XPD:REF>
+</XPD:OBJ>
+</XPD:OBJ>
+<XPD:OBJ name="OwnedViews[1]" type="UMLSubsystemView" guid="pWG0GzASo0SlouBNT+utWgAA">
+<XPD:ATTR name="LineColor" type="string">clMaroon</XPD:ATTR>
+<XPD:ATTR name="FillColor" type="string">$00B9FFFF</XPD:ATTR>
+<XPD:ATTR name="Left" type="integer">492</XPD:ATTR>
+<XPD:ATTR name="Top" type="integer">24</XPD:ATTR>
+<XPD:ATTR name="Width" type="integer">477</XPD:ATTR>
+<XPD:ATTR name="Height" type="integer">373</XPD:ATTR>
+<XPD:REF name="Model">qyKUbqhQ8EyhumrM941KvQAA</XPD:REF>
+<XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="on9WO/3B8Uqa0s9XIKQC8AAA">
+<XPD:OBJ name="NameLabel" type="LabelView" guid="JL2ffyP6XU6rz1avuJC3TQAA">
+<XPD:ATTR name="FontStyle" type="integer">1</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">Python Side</XPD:ATTR>
+</XPD:OBJ>
+<XPD:OBJ name="StereotypeLabel" type="LabelView" guid="l4Ez0SbXsE2xrVEUTpYf0QAA">
+<XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
+</XPD:OBJ>
+<XPD:OBJ name="PropertyLabel" type="LabelView" guid="aBq9cW1lWUy2ccfyjAybxgAA">
+<XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
+</XPD:OBJ>
+</XPD:OBJ>
+<XPD:OBJ name="OperationCompartment" type="UMLOperationCompartmentView" guid="ngeuNl+TO0eYTBEm0Z5PxgAA">
+<XPD:REF name="Model">qyKUbqhQ8EyhumrM941KvQAA</XPD:REF>
+</XPD:OBJ>
+</XPD:OBJ>
+</XPD:OBJ>
+</XPD:OBJ>
+<XPD:ATTR name="#OwnedElements" type="integer">2</XPD:ATTR>
+<XPD:OBJ name="OwnedElements[0]" type="UMLSubsystem" guid="OHBSyFb16EmVIkwekRqZnwAA">
+<XPD:ATTR name="Name" type="string">Javascript Side</XPD:ATTR>
+<XPD:REF name="Namespace">bQakug+Kf0+Tmp6HzalutQAA</XPD:REF>
+<XPD:ATTR name="#Views" type="integer">2</XPD:ATTR>
+<XPD:REF name="Views[0]">fRlJJYvMF0O/zZPNhHELdgAA</XPD:REF>
+<XPD:REF name="Views[1]">PfyiWkpJ/0y6vo8XtazDDgAA</XPD:REF>
+</XPD:OBJ>
+<XPD:OBJ name="OwnedElements[1]" type="UMLSubsystem" guid="qyKUbqhQ8EyhumrM941KvQAA">
+<XPD:ATTR name="Name" type="string">Python Side</XPD:ATTR>
+<XPD:REF name="Namespace">bQakug+Kf0+Tmp6HzalutQAA</XPD:REF>
+<XPD:ATTR name="#Views" type="integer">2</XPD:ATTR>
+<XPD:REF name="Views[0]">pWG0GzASo0SlouBNT+utWgAA</XPD:REF>
+<XPD:REF name="Views[1]">ngeuNl+TO0eYTBEm0Z5PxgAA</XPD:REF>
+</XPD:OBJ>
+</XPD:OBJ>
+</XPD:OBJ>
+</XPD:BODY>
+</XPD:PROJECT>

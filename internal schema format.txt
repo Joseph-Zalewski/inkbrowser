@@ -1,0 +1,8 @@
+We need an extensible format for representing schemas internally. It needs to be extensible with arbitrary new things like look and feel, and all that stuff, but at minimum capture the sizes of boxes and where they are, what color they are, and the endpoint locations of arrow segments, which belong to each arrow, and their arrowhead type. A JSON-style format might be good.
+
+Yes, let's just use JSON, with the following structure:
+Tier 1: Array "Boxes", Array "Edges", String "Mode", Integer "CanvasX", Integer "CanvasY"
+Tier 2: "Boxes" consists of box objects, etc. "Mode" has one reserved value, "DEFAULT".
+Tier 3: Box Object: integers "XOffset", "YOffset", "XSize", "YSize", String "ColorHex","Id","Label"
+Edge Object: String "Source", String "Target", String "Label", Integers "LabelX", "LabelY", Array "Waypoints", String "ArrowType"
+Tier 4: "Waypoints" consists of two-element arrays of Integers.

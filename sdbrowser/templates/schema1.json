@@ -1,0 +1,13 @@
+{
+	"Boxes":[
+		{"Id":"Source",
+		"XOffset":100,
+		"YOffset":100,
+		"XSize":70,
+		"YSize":30,
+		"ColorHex":"0000FF",
+		"Label":"Source"}
+	],
+	"Edges":[],
+	"Mode":"DEFAULT", "CanvasX":500, "CanvasY":500
+}

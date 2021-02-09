@@ -5,9 +5,46 @@
 		"YOffset":100,
 		"XSize":70,
 		"YSize":30,
-		"ColorHex":"0000FF",
-		"Label":"Source"}
+		"FillColorHex":"#ffffff",
+		"TextColorHex":"#ff0000",
+		"Label":"Source"},
+		
+		{"Id":"Sink",
+		"XOffset":200,
+		"YOffset":300,
+		"XSize":70,
+		"YSize":30,
+		"FillColorHex":"#ef99ef",
+		"TextColorHex":"#ff0000",
+		"Label":"Sink"}
 	],
-	"Edges":[],
+	"Arrows":[
+		{"Id":"Primary",
+		"LabelX":200,
+		"LabelY":200,
+		"Label":"Primary",
+		"ArrowType":"Hollow",
+		"Source":"Source",
+		"Target":"Sink",
+		"Waypoints":[
+				[200,200],
+				[220,200]
+			]
+		},
+		
+		{"Id":"Segundo",
+		"LabelX":200,
+		"LabelY":200,
+		"Label":"Secondary",
+		"ArrowType":"Hollow",
+		"Source":"Source",
+		"Target":"Sink",
+		"Waypoints":[
+				[400,200],
+				[20,500],
+				[30,750]
+			]
+		}
+	],
 	"Mode":"DEFAULT", "CanvasX":500, "CanvasY":500
 }

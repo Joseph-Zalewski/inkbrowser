@@ -3,6 +3,8 @@ We need an extensible format for representing schemas internally. It needs to be
 Yes, let's just use JSON, with the following structure:
 Tier 1: Array "Boxes", Array "Edges", String "Mode", Integer "CanvasX", Integer "CanvasY"
 Tier 2: "Boxes" consists of box objects, etc. "Mode" has one reserved value, "DEFAULT".
-Tier 3: Box Object: integers "XOffset", "YOffset", "XSize", "YSize", String "ColorHex","Id","Label"
-Edge Object: String "Source", String "Target", String "Label", Integers "LabelX", "LabelY", Array "Waypoints", String "ArrowType"
+Tier 3: Box Object: integers "XOffset", "YOffset", "XSize", "YSize", String "FillColorHex", "TextColorHex" expecting HTML standard color hex codes "#rrggbb", String "Id","Label"
+Edge Object: String "Source", String "Target", String "Label", Integers "LabelX", "LabelY", Array "Waypoints", String "ArrowType", String "Label", String "Id"
 Tier 4: "Waypoints" consists of two-element arrays of Integers.
+
+Semantic notes: For A an arrow, X,Y boxes, X,Y will be drawn as boxes, and A as an arrow, with A going from X to Y if A.Source == X.Id and A.Target == Y.Id .

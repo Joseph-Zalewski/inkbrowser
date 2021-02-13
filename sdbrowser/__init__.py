@@ -39,5 +39,13 @@ def create_app():
         else:
             message = ''
         return render_template('interface.html', message=message)
-            
+        
+    @app.route('/client')
+    def client():
+        return render_template('client.html')
+        
+    @app.route('/jstest')
+    def jstest():
+        return render_template('jstest.html')
+    
     return app

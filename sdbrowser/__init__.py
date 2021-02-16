@@ -46,6 +46,6 @@ def create_app():
         
     @app.route('/jstest')
     def jstest():
-        return render_template('jstest.html')
+        return render_template('jstest2.html')
     
     return app

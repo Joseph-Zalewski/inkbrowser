@@ -19,9 +19,9 @@ def create_app():
     def hello():
         return 'Hello, World!'
         
-    @app.route('/query/<q>')
-    def query(q):
-        return q
+    #@app.route('/query/<q>')
+    #def query(q):
+    #    return q
         
     @app.route('/interface', methods = ('GET', 'POST'))
     def interface():
@@ -44,8 +44,16 @@ def create_app():
     def client():
         return render_template('client.html')
         
-    @app.route('/jstest')
-    def jstest():
-        return render_template('jstest2.html')
+    @app.route('/query', methods = ('GET', 'POST'))
+    def query():
+        if request.method == 'POST':
+            q = request.form['query']
+            endpoint = request.form['endpoint']
+            wrapper = SPARQLWrapper(endpoint)
+            wrapper.setQuery(q)
+            wrapper.setReturnFormat(JSON)
+            results = wrapper.query().convert()
+            return results
+            
     
     return app

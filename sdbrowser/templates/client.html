@@ -6,7 +6,11 @@
 	JSON decode - X?
 	Add listeners - X
 	Host this page from Flask - X
-	Send queries to Python server
+	Send queries to Python server - X
+	Create View class
+	Create graph view
+	Create triple list view
+	Create object list view
 	Display query output
 	Access hyperlinks in query output??
 	Make paths to mxGraph source code platform-independent
@@ -20,12 +24,40 @@
 	</script>
 	
 	<script type="text/javascript">
-		JSONtestinput = '{ 	"Boxes":[ 		{"Id":"Source", 		"XOffset":100, 		"YOffset":100, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ffffff", 		"TextColorHex":"#ff0000", 		"Label":"Source", "Query":"SELECT source FROM "}, 		 		{"Id":"Sink", 		"XOffset":200, 		"YOffset":300, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ef99ef", 		"TextColorHex":"#ff0000", 		"Label":"Sink"} 	], 	"Arrows":[ 		{"Id":"Primary", 		"LabelX":200, 		"LabelY":200, 		"Label":"Primary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[200,200], 				[220,200] 			] 		}, 		 		{"Id":"Segundo", 		"LabelX":200, 		"LabelY":200, 		"Label":"Secondary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[400,200], 				[20,500], 				[30,750] 			], "AdditionalMxStyle":"endArrow=block;endFill=0;", "Query":"SELECT *" 		} 	], 	"Mode":"DEFAULT", "CanvasX":500, "CanvasY":500 }';
+		JSONtestinput = '{ 	"Boxes":[ 		{"Id":"Source", 		"XOffset":100, 		"YOffset":100, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ffffff", 		"TextColorHex":"#ff0000", 		"Label":"Source", "Query":"SELECT source FROM "}, 		 		{"Id":"Sink", 		"XOffset":200, 		"YOffset":300, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ef99ef", 		"TextColorHex":"#ff0000", 		"Label":"Sink"} 	], 	"Arrows":[ 		{"Id":"Primary", 		"LabelX":200, 		"LabelY":200, 		"Label":"Primary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[200,200], 				[220,200] 			] 		}, 		 		{"Id":"Segundo", 		"LabelX":200, 		"LabelY":200, 		"Label":"Secondary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[400,200], 				[20,500], 				[30,750] 			], "AdditionalMxStyle":"endArrow=block;endFill=0;", "Query":"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?label WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?label }" 		} 	], 	"Mode":"DEFAULT", "CanvasX":500, "CanvasY":500 }';
 	</script>
 	
 	<script type="text/javascript" src={{url_for('static', filename='mxgraph/javascript/mxClient.js')}}></script>
 	
 	<script type="text/javascript">
+	
+		////Class declarations
+		//View class. Represents any user interface sdBrowser has. Since this is Javascript, subclasses can take an arbitrary additional parameters containing information such as the DOM node or DOM nodes it will use to display. However, it has one distinguished parameter, collection, which takes the view container it can notify. This class should be considered abstract and never instantiated except in a subclass constructor.
+		function View(collection){
+			this.collection = collection;
+			collection.push(this);
+		}
+		View.prototype.processNotify = function(){};
+		
+		//GraphView subclass.
+		function GraphView(collection, DOMNode){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+		}
+		GraphView.prototype = Object.create(View.prototype);
+		Object.defineProperty(GraphView.prototype, 'constructor', {value: GraphView, enumerable: false, writable: true,});
+		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: function(JSONString)
+		{	
+			alert("JSONSToGraphs");
+			JSONToGraph(JSONString, this.DOMNode);
+		}});
+		
+		function objectTest(){
+			var viewArray = [];
+			var GV = new GraphView(viewArray, document.getElementById('OOgraphDiv'));
+			GV.JSONToGraph(JSONtestinput);
+		}
+	
 		//Gets whatever is at the url.
 		function getJSONSchema(url){
 		
@@ -46,25 +78,27 @@
 			return style;
 		}
 		
-		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. Return value is a JSON object containing query output, if the query was successful; otherwise, a failure value. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If not, a failure value will be returned.
-		function AJAXQuery(query, endpoint){
+		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. returnBox must be an object with a property 'value'. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, the response will be stored in returnBox.value.
+		function AJAXQuery(query, endpoint, returnBox){
 			request = new XMLHttpRequest();
 			request.open('POST', '/query', true);
 			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 			request.send('query='+query+'&endpoint='+endpoint);
+
 			request.onreadystatechange = function(){
 				alert('readystate changed, status'+this.status.toString());
 				if(this.readyState == 4 && this.status == 200){
 					alert('Response received:'+request.responseText);
-					var J = JSON.parse(request.responseText);
-					alert('Response as JSON has head:'+J['head']);
+					J = JSON.parse(request.responseText);
 				}
 			}
+
 		}
 		
 		AJAXQuery('PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?label WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?label }', 'http://dbpedia.org/sparql');
 		
 		//Contract: String JSONString, DOM element pageElement.
+		//Constructs the mxGraph encoded by JSONString, if there is one, in the DOM element pageElement.
 		function JSONToGraph(JSONString, pageElement){
 			var schema = JSON.parse(JSONString);
 			if (!mxClient.isBrowserSupported())
@@ -99,12 +133,12 @@
 						if(cell != null){
 							for(b of schema.Boxes){
 								if(nodes[b.Id] == cell){
-									statusDiv.innerHTML = b.Query;
+									statusDiv.innerHTML = AJAXQuery(b.Query, 'http://dbpedia.org/sparql')
 								}
 							}
 							for(e of schema.Arrows){
 								if(edges[e.Id] == cell){
-									statusDiv.innerHTML = e.Query;
+									statusDiv.innerHTML = AJAXQuery(e.Query, 'http://dbpedia.org/sparql');
 								}
 							}
 						}
@@ -120,9 +154,12 @@
 		};
 	</script>
 </head>
-<body onload="JSONToGraph(JSONtestinput, document.getElementById('graphDiv'))">
+<!--<body onload="JSONToGraph(JSONtestinput, document.getElementById('graphDiv'))">-->
+<body onload="objectTest()">
+
 <div id="graphDiv" style="position:relative;height:500px;width:500px;"></div>
 <div id="errorDiv"></div>
 <div id="statusDiv"></div>
+<div id="OOgraphDiv" style="position:relative;height:500px;width:500px;"></div>
 </body>
 </html>

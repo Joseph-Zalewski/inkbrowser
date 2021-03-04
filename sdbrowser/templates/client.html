@@ -48,13 +48,12 @@
 		Object.defineProperty(GraphView.prototype, 'constructor', {value: GraphView, enumerable: false, writable: true,});
 		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: function(JSONString)
 		{	
-			alert("JSONSToGraphs");
 			JSONToGraph(JSONString, this.DOMNode);
 		}});
 		
 		function objectTest(){
 			var viewArray = [];
-			var GV = new GraphView(viewArray, document.getElementById('OOgraphDiv'));
+			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
 			GV.JSONToGraph(JSONtestinput);
 		}
 	
@@ -95,7 +94,6 @@
 
 		}
 		
-		AJAXQuery('PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?label WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?label }', 'http://dbpedia.org/sparql');
 		
 		//Contract: String JSONString, DOM element pageElement.
 		//Constructs the mxGraph encoded by JSONString, if there is one, in the DOM element pageElement.
@@ -122,7 +120,7 @@
 						mxEdgeStyle['sd'+e.Id] = constructEdgestyle(e);
 						
 						mxStyleRegistry.putValue('sd'+e.Id, mxEdgeStyle['sd'+e.Id]);
-						mxUtils.error(mxStyleRegistry.getValue('sd'+e.Id), 200, false);
+						//mxUtils.error(mxStyleRegistry.getValue('sd'+e.Id), 200, false);
 						//insert the edge
 						edges[e.Id] = diagram.insertEdge(parent, null, e.Label, nodes[e.Source], nodes[e.Target], 'edgeStyle=sd'+e.Id+';'+e.AdditionalMxStyle);
 					}
@@ -157,9 +155,8 @@
 <!--<body onload="JSONToGraph(JSONtestinput, document.getElementById('graphDiv'))">-->
 <body onload="objectTest()">
 
-<div id="graphDiv" style="position:relative;height:500px;width:500px;"></div>
 <div id="errorDiv"></div>
 <div id="statusDiv"></div>
-<div id="OOgraphDiv" style="position:relative;height:500px;width:500px;"></div>
+<div id="GraphDiv" style="position:relative;height:500px;width:500px;"></div>
 </body>
 </html>

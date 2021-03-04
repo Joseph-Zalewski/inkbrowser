@@ -1,0 +1,20 @@
+Most of the files in this repo can be safely ignored!
+The only ones that matter as far as code goes are:
+sdbrowser/__init__.py
+sdbrowser/templates/client.html
+
+In addition, sdbrowser/templates/schema1.json is a readable example of the internal schema format (only need to know if you are creating schema diagrams.)
+
+In __init__.py:
+Only the client() and query() functions matter now. The rest is left over from testing and I will eventually delete it. __init__.py is effectively finished.
+
+In client.html:
+This file is in more of a state of flux. Not everything is exactly as depicted in the architecture diagram (yet).
+
+Things that can be expected to remain static:
+The View class. The GraphView subclass illustrates the conventional boilerplate for (old-style) Javascript subclass creation.
+
+Implementing a new View subclass:
+The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other 
+views, this must be done by implementing the processNotify() function (this should have a single parameter expecting a Javascript Object, but it doesn't yet); to
+pass information *to* the other views, you do something like (...create message object M...); for(var v of collection){v.processNotify(M)};

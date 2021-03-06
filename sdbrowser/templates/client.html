@@ -7,8 +7,8 @@
 	Add listeners - X
 	Host this page from Flask - X
 	Send queries to Python server - X
-	Create View class
-	Create graph view
+	Create View class - X
+	Create graph view - X
 	Create triple list view
 	Create object list view
 	Display query output
@@ -51,10 +51,22 @@
 			JSONToGraph(JSONString, this.DOMNode);
 		}});
 		
+		//PlainTextView subclass.
+		function PlainTextView(collection, DOMNode){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+		}
+		PlainTextView.prototype = Object.create(View.prototype);
+		Object.defineProperty(PlainTextView.prototype, 'constructor', {value: PlainTextView, enumerable: false, writable: true,});
+		PlainTextView.prototype.processNotify = function(str)
+			{this.DOMNode.innerHTML = str;};
+		
 		function objectTest(){
 			var viewArray = [];
 			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
 			GV.JSONToGraph(JSONtestinput);
+			var PTV = new PlainTextView(viewArray, document.getElementById('plainTextDiv'));
+			PTV.processNotify('notification');
 		}
 	
 		//Gets whatever is at the url.
@@ -77,8 +89,8 @@
 			return style;
 		}
 		
-		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. returnBox must be an object with a property 'value'. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, the response will be stored in returnBox.value.
-		function AJAXQuery(query, endpoint, returnBox){
+		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. callback must be a function capable of taking a string argument. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, callback() will be called on the response.
+		function AJAXQuery(query, endpoint, callback){
 			request = new XMLHttpRequest();
 			request.open('POST', '/query', true);
 			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -88,7 +100,7 @@
 				alert('readystate changed, status'+this.status.toString());
 				if(this.readyState == 4 && this.status == 200){
 					alert('Response received:'+request.responseText);
-					J = JSON.parse(request.responseText);
+					callback(request.responseText);
 				}
 			}
 
@@ -131,12 +143,16 @@
 						if(cell != null){
 							for(b of schema.Boxes){
 								if(nodes[b.Id] == cell){
-									statusDiv.innerHTML = AJAXQuery(b.Query, 'http://dbpedia.org/sparql')
+									AJAXQuery(b.Query, 'http://dbpedia.org/sparql',
+										function(str){
+											document.getElementById('statusDiv').innerHTML = str;});
 								}
 							}
 							for(e of schema.Arrows){
 								if(edges[e.Id] == cell){
-									statusDiv.innerHTML = AJAXQuery(e.Query, 'http://dbpedia.org/sparql');
+									AJAXQuery(e.Query, 'http://dbpedia.org/sparql',
+										function(str){
+											document.getElementById('statusDiv').innerHTML = str;});
 								}
 							}
 						}
@@ -157,6 +173,7 @@
 
 <div id="errorDiv"></div>
 <div id="statusDiv"></div>
+<div id="plainTextDiv"></div>
 <div id="GraphDiv" style="position:relative;height:500px;width:500px;"></div>
 </body>
 </html>

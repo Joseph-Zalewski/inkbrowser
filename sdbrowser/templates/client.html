@@ -9,9 +9,13 @@
 	Send queries to Python server - X
 	Create View class - X
 	Create graph view - X
+	Display query output - X
+	Encapsulate functions - X
+	Set up message bus - X
+	Encapsulate mxGraph imports
+	Preliminary message format
 	Create triple list view
 	Create object list view
-	Display query output
 	Access hyperlinks in query output??
 	Make paths to mxGraph source code platform-independent
 	To Do on Flask End:
@@ -38,6 +42,7 @@
 			collection.push(this);
 		}
 		View.prototype.processNotify = function(){};
+		//end View class
 		
 		//GraphView subclass.
 		function GraphView(collection, DOMNode){
@@ -46,70 +51,12 @@
 		}
 		GraphView.prototype = Object.create(View.prototype);
 		Object.defineProperty(GraphView.prototype, 'constructor', {value: GraphView, enumerable: false, writable: true,});
-		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: function(JSONString)
-		{	
-			JSONToGraph(JSONString, this.DOMNode);
-		}});
-		
-		//PlainTextView subclass.
-		function PlainTextView(collection, DOMNode){
-			View.call(this, collection);
-			this.DOMNode = DOMNode;
-		}
-		PlainTextView.prototype = Object.create(View.prototype);
-		Object.defineProperty(PlainTextView.prototype, 'constructor', {value: PlainTextView, enumerable: false, writable: true,});
-		PlainTextView.prototype.processNotify = function(str)
-			{this.DOMNode.innerHTML = str;};
-		
-		function objectTest(){
-			var viewArray = [];
-			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
-			GV.JSONToGraph(JSONtestinput);
-			var PTV = new PlainTextView(viewArray, document.getElementById('plainTextDiv'));
-			PTV.processNotify('notification');
-		}
-	
-		//Gets whatever is at the url.
-		function getJSONSchema(url){
-		
-		};
-		
-		//Contract: e is an Arrow object extracted from a parsed internal JSON representation. Returns an mxEdgestyle which encodes the routing information for e, based on e.Waypoints, if that field is defined. Otherwise returns the default mxGraph elbow style.
-		function constructEdgestyle(e){
-			var style;
-			if(e.Waypoints){
-				style = function(state,source,target,points,result){
-					for(var pt of e.Waypoints){
-						result.push(new mxPoint(pt[0],pt[1]));
-					}
-				}
-			}else{
-				style = mxEdgeStyle.ElbowConnector;
-			}
-			return style;
-		}
-		
-		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. callback must be a function capable of taking a string argument. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, callback() will be called on the response.
-		function AJAXQuery(query, endpoint, callback){
-			request = new XMLHttpRequest();
-			request.open('POST', '/query', true);
-			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			request.send('query='+query+'&endpoint='+endpoint);
-
-			request.onreadystatechange = function(){
-				alert('readystate changed, status'+this.status.toString());
-				if(this.readyState == 4 && this.status == 200){
-					alert('Response received:'+request.responseText);
-					callback(request.responseText);
-				}
-			}
-
-		}
-		
-		
+		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: 
 		//Contract: String JSONString, DOM element pageElement.
 		//Constructs the mxGraph encoded by JSONString, if there is one, in the DOM element pageElement.
-		function JSONToGraph(JSONString, pageElement){
+		function(JSONString)
+		{	
+			var pageElement = this.DOMNode;
 			var schema = JSON.parse(JSONString);
 			if (!mxClient.isBrowserSupported())
 			{
@@ -129,13 +76,13 @@
 					
 					for(var e of schema.Arrows){
 						//create edgestyle for this edge
-						mxEdgeStyle['sd'+e.Id] = constructEdgestyle(e);
-						
+						mxEdgeStyle['sd'+e.Id] = this.constructEdgestyle(e);
 						mxStyleRegistry.putValue('sd'+e.Id, mxEdgeStyle['sd'+e.Id]);
 						//mxUtils.error(mxStyleRegistry.getValue('sd'+e.Id), 200, false);
 						//insert the edge
 						edges[e.Id] = diagram.insertEdge(parent, null, e.Label, nodes[e.Source], nodes[e.Target], 'edgeStyle=sd'+e.Id+';'+e.AdditionalMxStyle);
 					}
+					var collection = this.collection;
 					diagram.addListener(mxEvent.CLICK, function(sender, evt)
 					{
 						var e = evt.getProperty('event');
@@ -145,14 +92,20 @@
 								if(nodes[b.Id] == cell){
 									AJAXQuery(b.Query, 'http://dbpedia.org/sparql',
 										function(str){
-											document.getElementById('statusDiv').innerHTML = str;});
+											for(var V of collection){
+												V.processNotify(str);
+											}
+											});
 								}
 							}
 							for(e of schema.Arrows){
 								if(edges[e.Id] == cell){
 									AJAXQuery(e.Query, 'http://dbpedia.org/sparql',
 										function(str){
-											document.getElementById('statusDiv').innerHTML = str;});
+											for(var V of collection){
+												V.processNotify(str);
+											}
+											});
 								}
 							}
 						}
@@ -165,7 +118,68 @@
 					diagram.getModel().endUpdate();
 				}
 			}
+		}});
+		Object.defineProperty(GraphView.prototype, 'constructEdgestyle', {value:
+		//Contract: e is an Arrow object extracted from a parsed internal JSON representation. Returns an mxEdgestyle which encodes the routing information for e, based on e.Waypoints, if that field is defined. Otherwise returns the default mxGraph elbow style.
+		function(e)
+		{	
+			var style;
+			if(e.Waypoints){
+				style = function(state,source,target,points,result){
+					for(var pt of e.Waypoints){
+						result.push(new mxPoint(pt[0],pt[1]));
+					}
+				}
+			}else{
+				style = mxEdgeStyle.ElbowConnector;
+			}
+			return style;
+		}});
+		//end GraphView subclass
+		
+		//PlainTextView subclass.
+		function PlainTextView(collection, DOMNode){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+		}
+		PlainTextView.prototype = Object.create(View.prototype);
+		Object.defineProperty(PlainTextView.prototype, 'constructor', {value: PlainTextView, enumerable: false, writable: true,});
+		PlainTextView.prototype.processNotify = function(str)
+			{this.DOMNode.innerHTML = str;};
+		
+		function objectTest(){
+			var viewArray = [];
+			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
+			var PTV = new PlainTextView(viewArray, document.getElementById('plainTextDiv'));
+			GV.JSONToGraph(JSONtestinput);
+			PTV.processNotify('notification');
+		}
+		//end PlainTextView subclass
+	
+		//Gets whatever is at the url.
+		function getJSONSchema(url){
+		
 		};
+		
+		
+		
+		
+		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. callback must be a function capable of taking a string argument. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, callback() will be called on the response.
+		function AJAXQuery(query, endpoint, callback){
+			request = new XMLHttpRequest();
+			request.open('POST', '/query', true);
+			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			request.send('query='+query+'&endpoint='+endpoint);
+
+			request.onreadystatechange = function(){
+				alert('readystate changed, status'+this.status.toString());
+				if(this.readyState == 4 && this.status == 200){
+					alert('Response received:'+request.responseText);
+					callback(request.responseText);
+				}
+			}
+
+		}
 	</script>
 </head>
 <!--<body onload="JSONToGraph(JSONtestinput, document.getElementById('graphDiv'))">-->

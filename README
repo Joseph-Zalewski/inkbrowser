@@ -15,6 +15,35 @@ Things that can be expected to remain static:
 The View class. The GraphView subclass illustrates the conventional boilerplate for (old-style) Javascript subclass creation.
 
 Implementing a new View subclass:
-The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other 
-views, this must be done by implementing the processNotify() function (this should have a single parameter expecting a Javascript Object, but it doesn't yet); to
+The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other views, this must be done by implementing the processNotify() function (this should have a single parameter expecting a Javascript Object, but it doesn't yet); to
 pass information *to* the other views, you do something like (...create message object M...); for(var v of collection){v.processNotify(M)};
+
+NOTE: InkBrowser's existing code uses old-style plain Javascript subclasses, not ECMAScript 2015 classes, etc. I do not make any guarantees about compatibility with new Javascript features other than guarantees they themselves make. The basic pattern for making a subclass of View, the old-fashioned way, is the following (all text in <<<>>> is placeholder text):
+
+function <<<MyView>>>(collection, <<<additional arguments>>>){
+			View.call(this, collection);
+			[[[for each additional argument:]]]
+			this.<<<argument>>> = <<<argument>>>;
+		}
+		
+		<<<MyView>>>.prototype = Object.create(View.prototype);
+		
+		Object.defineProperty(<<<MyView>>>.prototype, 'constructor', {value: <<<MyView>>>, enumerable: false, writable: true,});
+		
+		[[[for each new method:]]]
+		Object.defineProperty(<<<MyView>>>.prototype, '<<<methodName>>>', {value: function(<<<method arguments>>>)
+		{	
+			<<<method code>>>
+		}});
+		
+		[[[for each method override:]]]
+		<<<MyView>>>.prototype.<<<methodName>>> = function(<<<arguments>>>)
+			{<<<new code>>>};
+		
+		
+		
+		
+		
+		
+		
+		

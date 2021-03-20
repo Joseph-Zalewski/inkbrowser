@@ -36,7 +36,7 @@
 	<script type="text/javascript">
 	
 		////Class declarations
-		//View class. Represents any user interface sdBrowser has. Since this is Javascript, subclasses can take an arbitrary additional parameters containing information such as the DOM node or DOM nodes it will use to display. However, it has one distinguished parameter, collection, which takes the view container it can notify. This class should be considered abstract and never instantiated except in a subclass constructor.
+		//View class. Represents any independent part of the user interface. Since this is Javascript, subclasses can take arbitrary additional constructor parameters containing information such as the DOM node or DOM nodes they will use to display themselves. However, View has one distinguished parameter, collection, which takes a collection of Views. Subclasses can send messages to other views in this collection by calling their processNotify method. This class should be considered abstract and never instantiated except in the constructor of a subclass.
 		function View(collection){
 			this.collection = collection;
 			collection.push(this);
@@ -48,12 +48,14 @@
 		function GraphView(collection, DOMNode){
 			View.call(this, collection);
 			this.DOMNode = DOMNode;
+			//holds identifiers of Views that receive data from this one
+			this.recipients = [];
 		}
 		GraphView.prototype = Object.create(View.prototype);
 		Object.defineProperty(GraphView.prototype, 'constructor', {value: GraphView, enumerable: false, writable: true,});
 		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: 
-		//Contract: String JSONString, DOM element pageElement.
-		//Constructs the mxGraph encoded by JSONString, if there is one, in the DOM element pageElement.
+		//Contract: Parameters: String JSONString.
+		//Constructs the mxGraph encoded by JSONString, if there is one, displaying it in the DOM element this.DOMNode.
 		function(JSONString)
 		{	
 			var pageElement = this.DOMNode;
@@ -120,7 +122,7 @@
 			}
 		}});
 		Object.defineProperty(GraphView.prototype, 'constructEdgestyle', {value:
-		//Contract: e is an Arrow object extracted from a parsed internal JSON representation. Returns an mxEdgestyle which encodes the routing information for e, based on e.Waypoints, if that field is defined. Otherwise returns the default mxGraph elbow style.
+		//Contract: e is an Arrow object extracted, e.g., from a parsed internal JSON representation. Returns an mxEdgestyle which encodes the routing information for e, based on e.Waypoints, if that field is defined. Otherwise returns the default mxGraph elbow style.
 		function(e)
 		{	
 			var style;
@@ -155,11 +157,26 @@
 			PTV.processNotify('notification');
 		}
 		//end PlainTextView subclass
-	
-		//Gets whatever is at the url.
-		function getJSONSchema(url){
 		
-		};
+		//ListView subclass
+		//displays a list of clickable items
+		function ListView(collection, DOMNode, identifier){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+			this.identifier = identifier;
+		}
+		
+		ListView.prototype = Object.create(View.prototype);
+		
+		Object.defineProperty(ListView.prototype, 'constructor', {value: ListView, enumerable: false, writable: true,});
+		
+		//Needs a query. ListView will use the query to load more results if needed.
+		ListView.prototype.processNotify = function(msg)
+			{
+				if(msg.gatekeeper()){
+					this.DOMNode.innerHTML = 'passed';
+				}
+			};
 		
 		
 		

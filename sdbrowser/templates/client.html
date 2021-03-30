@@ -13,9 +13,9 @@
 	Encapsulate functions - X
 	Set up message bus - X
 	Encapsulate mxGraph imports
-	Preliminary message format
+	Preliminary message format - X
 	Create triple list view
-	Create object list view
+	Create object list view - X
 	Access hyperlinks in query output??
 	Make paths to mxGraph source code platform-independent
 	To Do on Flask End:
@@ -28,18 +28,27 @@
 	</script>
 	
 	<script type="text/javascript">
-		JSONtestinput = '{ 	"Boxes":[ 		{"Id":"Source", 		"XOffset":100, 		"YOffset":100, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ffffff", 		"TextColorHex":"#ff0000", 		"Label":"Source", "Query":"SELECT source FROM "}, 		 		{"Id":"Sink", 		"XOffset":200, 		"YOffset":300, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ef99ef", 		"TextColorHex":"#ff0000", 		"Label":"Sink"} 	], 	"Arrows":[ 		{"Id":"Primary", 		"LabelX":200, 		"LabelY":200, 		"Label":"Primary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[200,200], 				[220,200] 			] 		}, 		 		{"Id":"Segundo", 		"LabelX":200, 		"LabelY":200, 		"Label":"Secondary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[400,200], 				[20,500], 				[30,750] 			], "AdditionalMxStyle":"endArrow=block;endFill=0;", "Query":"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?label WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?label }" 		} 	], 	"Mode":"DEFAULT", "CanvasX":500, "CanvasY":500 }';
+		JSONtestinput = '{ 	"Boxes":[ 		{"Id":"Source", 		"XOffset":100, 		"YOffset":100, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ffffff", 		"TextColorHex":"#ff0000", 		"Label":"Source"}, 		 		{"Id":"Sink", 		"XOffset":200, 		"YOffset":300, 		"XSize":70, 		"YSize":30, 		"FillColorHex":"#ef99ef", 		"TextColorHex":"#ff0000", 		"Label":"Sink"} 	], 	"Arrows":[ 		{"Id":"Primary", 		"LabelX":200, 		"LabelY":200, 		"Label":"Primary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[200,200], 				[220,200] 			] 		}, 		 		{"Id":"Segundo", 		"LabelX":200, 		"LabelY":200, 		"Label":"Secondary", 		"ArrowType":"Hollow", 		"Source":"Source", 		"Target":"Sink", 		"Waypoints":[ 				[400,200], 				[20,500], 				[30,750] 			], 		"Query":"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?X WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?X }", 		"Limit":10, 		"Endpoint":"http://dbpedia.org/sparql" 		} 	], 	"Mode":"DEFAULT", "CanvasX":500, "CanvasY":500 }';
 	</script>
 	
 	<script type="text/javascript" src={{url_for('static', filename='mxgraph/javascript/mxClient.js')}}></script>
 	
 	<script type="text/javascript">
+		//viewArray is global. See 'trigger' below.
+		var viewArray = [];
+		//generates unique identifiers for view objects
+		var currentIdentifier = 0;
+		function nextIdentifier(){
+			currentIdentifier = currentIdentifier + 1;
+			return currentIdentifier;
+		}
 	
 		////Class declarations
 		//View class. Represents any independent part of the user interface. Since this is Javascript, subclasses can take arbitrary additional constructor parameters containing information such as the DOM node or DOM nodes they will use to display themselves. However, View has one distinguished parameter, collection, which takes a collection of Views. Subclasses can send messages to other views in this collection by calling their processNotify method. This class should be considered abstract and never instantiated except in the constructor of a subclass.
 		function View(collection){
 			this.collection = collection;
 			collection.push(this);
+			this.identifier = nextIdentifier();
 		}
 		View.prototype.processNotify = function(){};
 		//end View class
@@ -92,20 +101,24 @@
 						if(cell != null){
 							for(b of schema.Boxes){
 								if(nodes[b.Id] == cell){
-									AJAXQuery(b.Query, 'http://dbpedia.org/sparql',
+								var q = b.Query + ' LIMIT ' + b.Limit;
+									AJAXQuery(q, b.Endpoint,
 										function(str){
+											var msg = {text: str, query: b.Query, limit: b.Limit, endpoint: b.Endpoint};
 											for(var V of collection){
-												V.processNotify(str);
+												V.processNotify(msg);
 											}
 											});
 								}
 							}
 							for(e of schema.Arrows){
 								if(edges[e.Id] == cell){
-									AJAXQuery(e.Query, 'http://dbpedia.org/sparql',
+								var q = e.Query + ' LIMIT ' + e.Limit;
+									AJAXQuery(q, e.Endpoint,
 										function(str){
+											var msg = {text: str, query: e.Query, limit: e.Limit, endpoint: e.Endpoint};
 											for(var V of collection){
-												V.processNotify(str);
+												V.processNotify(msg);
 											}
 											});
 								}
@@ -146,36 +159,67 @@
 		}
 		PlainTextView.prototype = Object.create(View.prototype);
 		Object.defineProperty(PlainTextView.prototype, 'constructor', {value: PlainTextView, enumerable: false, writable: true,});
-		PlainTextView.prototype.processNotify = function(str)
-			{this.DOMNode.innerHTML = str;};
+		PlainTextView.prototype.processNotify = function(msg)
+			{this.DOMNode.innerHTML = msg.text;};
 		
-		function objectTest(){
-			var viewArray = [];
-			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
-			var PTV = new PlainTextView(viewArray, document.getElementById('plainTextDiv'));
-			GV.JSONToGraph(JSONtestinput);
-			PTV.processNotify('notification');
-		}
+		
 		//end PlainTextView subclass
 		
 		//ListView subclass
 		//displays a list of clickable items
-		function ListView(collection, DOMNode, identifier){
+		function ListView(collection, DOMNode){
 			View.call(this, collection);
 			this.DOMNode = DOMNode;
-			this.identifier = identifier;
+			this.query = '';
+			this.limit = 10;
+			this.endpoint = '';
+			this.DOMNode.innerHTML = '<div></div><button>Load More Results</button>';
 		}
 		
 		ListView.prototype = Object.create(View.prototype);
 		
 		Object.defineProperty(ListView.prototype, 'constructor', {value: ListView, enumerable: false, writable: true,});
 		
-		//Needs a query. ListView will use the query to load more results if needed.
+		Object.defineProperty(ListView.prototype, 'processJSONResults', {value: function(str)
+		{	
+			var div = this.DOMNode.getElementsByTagName("div")[0];
+			try{
+				input = JSON.parse(str);
+				div.innerHTML ='<ul>';
+				for(var result of input.results.bindings){
+					div.innerHTML = div.innerHTML + '<li>' + result.X.value + '</li>';
+				}
+				div.innerHTML = div.innerHTML + '</ul>';
+			}
+			catch{
+				div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
+			}
+		}});
+		
+		//Needs a query, for a single variable X. ListView will use the query to load more results if needed.
+		//By default ListView assumes any text passed to it is a text representation
+		//of JSON SPARQL query results for a query with a single variable X, and extract results.bindings.X.value
+		//fields from it.
 		ListView.prototype.processNotify = function(msg)
 			{
-				if(msg.gatekeeper()){
-					this.DOMNode.innerHTML = 'passed';
+				if(msg.text != undefined){
+					this.processJSONResults(msg.text);
 				}
+				//if the message has no text, then the ListView assumes it is supposed to run a new query.
+				else{
+					var thisref = this;
+					AJAXQuery(msg.query + ' LIMIT ' + msg.limit, msg.endpoint, function(str){
+						thisref.processJSONResults(str);
+					});
+				}
+				this.query = msg.query;
+				this.limit = msg.limit;
+				this.endpoint = msg.endpoint;
+				var thisref = this;
+				var tr = function(){
+					trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint, limit:(2*thisref.limit)});
+				};
+				this.DOMNode.getElementsByTagName('button')[0].onclick = tr;
 			};
 		
 		
@@ -189,13 +233,28 @@
 			request.send('query='+query+'&endpoint='+endpoint);
 
 			request.onreadystatechange = function(){
-				alert('readystate changed, status'+this.status.toString());
+				//alert('readystate changed, status'+this.status.toString());
 				if(this.readyState == 4 && this.status == 200){
-					alert('Response received:'+request.responseText);
+					//alert('Response received:'+request.responseText);
 					callback(request.responseText);
 				}
 			}
 
+		}
+		//this function is a hook for buttons and other HTML elements to access the view objects through their message bus.
+		function trigger(identifier, msg){
+			for (var view of viewArray){
+				if (view.identifier == identifier)
+				{
+					view.processNotify(msg);
+				}
+			}
+		}
+		
+		function objectTest(){
+			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
+			var LV = new ListView(viewArray, document.getElementById('listDiv'));
+			GV.JSONToGraph(JSONtestinput);
 		}
 	</script>
 </head>
@@ -205,6 +264,11 @@
 <div id="errorDiv"></div>
 <div id="statusDiv"></div>
 <div id="plainTextDiv"></div>
+<div id="listDiv"></div>
+<form>
+	<label>Look up a Schema Diagram:</label>
+	<input type="text" id="schemaAddress" style="width:500px;"></input>
+</form>
 <div id="GraphDiv" style="position:relative;height:500px;width:500px;"></div>
 </body>
 </html>

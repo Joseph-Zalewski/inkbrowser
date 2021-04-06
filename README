@@ -15,16 +15,8 @@ Things that can be expected to remain static:
 The View class. The GraphView subclass illustrates the conventional boilerplate for (old-style) Javascript subclass creation.
 
 Implementing a new View subclass:
-The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other views, this must be done by implementing the processNotify() function (this has a single parameter expecting a Javascript Object); to
+The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other views, this must be done by implementing the processNotify() function (this should have a single parameter expecting a Javascript Object, but it doesn't yet); to
 pass information *to* the other views, you do something like (...create message object M...); for(var v of collection){v.processNotify(M)};
-
-Standard fields to be used in messages:
-text - for arbitrary text.
-query - for SPARQL queries that the recipient may run. Should not contain a LIMIT clause, and should stay well-formed if ' LIMIT n' is appended.
-limit - stores a limit value for the query in query.
-endpoint - stores a URL to a SPARQL endpoint.
-
-Every View object automatically has a unique integer identifier (called identifier). To pass a message directly to just one view from anywhere (such as a DOM event handler), use the global function trigger(identifier, msg).
 
 NOTE: InkBrowser's existing code uses old-style plain Javascript subclasses, not ECMAScript 2015 classes, etc. I do not make any guarantees about compatibility with new Javascript features other than guarantees they themselves make. The basic pattern for making a subclass of View, the old-fashioned way, is the following (all text in <<<>>> is placeholder text):
 

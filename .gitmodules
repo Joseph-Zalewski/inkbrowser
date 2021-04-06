@@ -1,0 +1,3 @@
+[submodule "sdbrowser/static/mxgraph"]
+	path = sdbrowser/static/mxgraph
+	url = https://github.com/jgraph/mxgraph

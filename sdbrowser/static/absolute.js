@@ -1,1 +1,0 @@
-alert('inside the script');

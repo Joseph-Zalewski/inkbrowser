@@ -1,0 +1,12 @@
+This is a specification of the JavaScript object format used for messages passed between Views.
+Any of these fields may fail to be defined, and the behavior of processNotify(object) is determined by the subclass of View implementing it; however, this document should be taken as providing the normative guidelines for what a subclass should use these fields for.
+
+text - any text information
+
+query - must be a valid SPARQL query, and must remain valid when a LIMIT clause is appended to it
+
+limit - a number, giving a desired number of query results
+
+endpoint - an address of a SPARQL endpoint; should be an endpoint which can answer the query stored in <<<query>>>.
+
+gatekeeper - a function which will be called by (most) views upon receiving the message; if it returns false, the rest of the message will not be processed.

@@ -16,6 +16,7 @@
 	Preliminary message format - X
 	Create triple list view
 	Create object list view - X
+	Fix style on the tree view output
 	Access hyperlinks in query output??
 	Make paths to mxGraph source code platform-independent
 	To Do on Flask End:
@@ -221,6 +222,38 @@
 				};
 				this.DOMNode.getElementsByTagName('button')[0].onclick = tr;
 			};
+			
+			
+		//TreeView class
+		//root is some object, getChildren(node) is some function which takes an object and returns its children as an array; together these specify an abstract tree. It is the instantiator's responsibility to ensure this tree is not infinite. The TreeView displays this tree as an HTML tree. display() is some function that takes nodes of the abstract tree and converts them into strings to display.
+		function TreeView(collection, DOMNode, root, getChildren, display){
+			View.call(this, collection);
+			this.root = root;
+			this.getChildren = getChildren;
+			this.DOMNode = DOMNode;
+			this.display = display;
+			content = this.expand(root);
+			this.DOMNode.innerHTML = content;
+		}
+		
+		TreeView.prototype = Object.create(View.prototype);
+		
+		Object.defineProperty(TreeView.prototype, 'constructor', {value: TreeView, enumerable: false, writable: true,});
+		
+		//this method takes an abstract tree node 'node' and returns the subtree rooted at 'node', in HTML form.
+		Object.defineProperty(TreeView.prototype, 'expand', {value: function(node)
+		{	
+			ret = '<span class=\"caret\">' + this.display(node) + '</span>';
+			var children = this.getChildren(node);
+			if (children.length != 0){
+				ret = ret + '<ul class=\"nested\">';
+				for(var child of children){
+					ret = ret + '<li>'+this.expand(child)+'</li>';
+				}
+				ret = ret + '</ul>';
+			}
+			return ret;
+		}});
 		
 		
 		
@@ -255,6 +288,7 @@
 			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
 			var LV = new ListView(viewArray, document.getElementById('listDiv'));
 			GV.JSONToGraph(JSONtestinput);
+			var TV = new TreeView(viewArray, document.getElementById('treeDiv'), 7, function(n){if (n > 1) return [n-1,n-2]; else return [];}, function(n){return n.toString()});
 		}
 	</script>
 </head>
@@ -265,6 +299,7 @@
 <div id="statusDiv"></div>
 <div id="plainTextDiv"></div>
 <div id="listDiv"></div>
+<div id="treeDiv"></div>
 <form>
 	<label>Look up a Schema Diagram:</label>
 	<input type="text" id="schemaAddress" style="width:500px;"></input>

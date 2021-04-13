@@ -1,0 +1,25 @@
+<title>Parse Test</title>
+
+<script type="text/javascript">
+const OwlFile = "static/CoModIDE_example_2.xml";
+var XHR = new XMLHttpRequest();
+XHR.onreadystatechange = function(){
+	if(this.readyState == 4 && this.status == 200){
+			parse(this.responseXML);
+	}
+}
+XHR.open("GET", OwlFile, true);
+XHR.send();
+
+function parse(DOM){
+	var positionBlocks = DOM.getElementsByTagName("opla-sd:entityPosition");
+	//instantiate an array of the nodes of the output
+	var outputNodes = [];
+	var URIs = new Set();
+	for (var p of positionBlocks){
+		
+	}
+}
+</script>
+
+<div id="outputdiv"></div>

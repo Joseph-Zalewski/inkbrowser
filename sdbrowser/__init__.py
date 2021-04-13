@@ -15,30 +15,9 @@ def create_app():
         SECRET_KEY = 'dev'
     )
         
-    @app.route('/test')
-    def hello():
-        return 'Hello, World!'
-        
-    #@app.route('/query/<q>')
-    #def query(q):
-    #    return q
-        
-    @app.route('/interface', methods = ('GET', 'POST'))
-    def interface():
-        if request.method == 'POST':
-            
-            endpoint = request.form['endpoint']
-            query = request.form['query']
-            wrapper = SPARQLWrapper(endpoint)
-            wrapper.setQuery(query)
-            wrapper.setReturnFormat(JSON)
-            results = wrapper.query().convert()
-            message = "Results: "
-            for result in results["results"]["bindings"]:
-                message = message + result["label"]["value"]
-        else:
-            message = ''
-        return render_template('interface.html', message=message)
+    @app.route('/parsetest')
+    def parseTest():
+        return render_template('parseTest.html')
         
     @app.route('/client')
     def client():

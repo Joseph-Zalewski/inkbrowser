@@ -2,6 +2,9 @@
 
 <script type="text/javascript">
 const OwlFile = "static/CoModIDE_example_2.xml";
+//constants defining the size of the schema diagram to output, in pixels
+const XSCALE = 500;
+const YSCALE = 500;
 var XHR = new XMLHttpRequest();
 XHR.onreadystatechange = function(){
 	if(this.readyState == 4 && this.status == 200){
@@ -15,10 +18,52 @@ function parse(DOM){
 	var positionBlocks = DOM.getElementsByTagName("opla-sd:entityPosition");
 	//instantiate an array of the nodes of the output
 	var outputNodes = [];
+	//this set tracks the elements containing entityPosition blocks, since CoModIDE output files sometimes contain duplicate entityPosition blocks, and we don't want to count the elements containing them twice.
 	var URIs = new Set();
 	for (var p of positionBlocks){
-		
+		if (!URIs.has(p.parentNode)){
+			URIs.add(p.parentNode);
+			outputNodes.push(p.parentNode);
+		}
 	}
+	//output JSON
+	var JSONOutput = '';
+	//obtain bounds, scale to fixed size. We'll directly alter the DOM object to do this.
+	var xMax = 0;
+	var yMax = 0;
+	for (var n of outputNodes){
+		var currx = parseInt(n.getElementsByTagName("opla-sd:entityPosition")[0].getElementsByTagName("rdf:Description")[0].getElementsByTagName("opla-sd:entityPositionX")[0].firstChild.nodeValue);
+		if(currx > xMax){
+			xMax = currx;
+		}
+		var curry = parseInt(n.getElementsByTagName("opla-sd:entityPosition")[0].getElementsByTagName("rdf:Description")[0].getElementsByTagName("opla-sd:entityPositionY")[0].firstChild.nodeValue);
+		if(curry > yMax){
+			yMax = curry;
+		}
+	}
+
+	for(var n of outputNodes){
+		//if all goes well (the xml is formed as expected), xNode is the text node containing the X-coordinate of n
+		var xNode = n.getElementsByTagName("opla-sd:entityPosition")[0].getElementsByTagName("rdf:Description")[0].getElementsByTagName("opla-sd:entityPositionX")[0].firstChild;
+		alert(xNode.nodeValue);
+		xNode.nodeValue = (parseInt(xNode.nodeValue) * XSCALE / xMax).toString();
+		alert(xNode.nodeValue);
+		var yNode = n.getElementsByTagName("opla-sd:entityPosition")[0].getElementsByTagName("rdf:Description")[0].getElementsByTagName("opla-sd:entityPositionY")[0].firstChild;
+		yNode.nodeValue = (parseInt(yNode.nodeValue) * YSCALE / yMax).toString();
+	}
+	
+	
+	//determine edge waypoints - this should be a modular section
+	////construct temporary graph representation showing where the property edges are.
+	var edges = [];
+	for(var p of DOM.getElementsByTagName("owl:ObjectProperty")){
+		edges.push(p);
+	}
+	//generate JSON
+}
+//n,m should be URI's found in an RDF/XML file. DOM should be a DOM object parsed from that file. Returns true only if node n really has a SubClassOf relation to node m. Due to the ambiguity of RDF/XML, this function is open for extension to make sure it really always returns true if n is a SubClassOf m.
+function isSubclassOf(n,m,DOM){
+	
 }
 </script>
 

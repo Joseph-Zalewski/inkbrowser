@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request
 from SPARQLWrapper import SPARQLWrapper, JSON
+from . import parse
 
 #__init__ file for Stage 1, which is only intended to be able to
 #use SPARQLWrapper successfully in some way.

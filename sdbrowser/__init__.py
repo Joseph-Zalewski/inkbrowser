@@ -15,7 +15,15 @@ def create_app():
     app.config.from_mapping(
         SECRET_KEY = 'dev'
     )
+    
+    @app.route('/iframeDiv/<title>/<name>')
+    def graphFrame(title, name):
+        return render_template('iframeDiv.html', frameTitle=title, divName=name)
         
+    @app.route('/iframeTest')
+    def iframeTest():
+        return render_template('iframeTest.html')
+    
     @app.route('/parsetest')
     def parseTest():
         return render_template('parseTest.html')

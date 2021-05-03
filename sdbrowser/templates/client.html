@@ -119,8 +119,10 @@
 						edges[e.Id] = diagram.insertEdge(parent, null, e.Label, nodes[e.Source], nodes[e.Target], 'edgeStyle=sd'+e.Id+';'+e.AdditionalMxStyle);
 					}
 					var collection = this.collection;
+					pageElement.onclick = function(){diagram.fireEvent(new mxEventObject('click'));};
 					diagram.addListener(mxEvent.CLICK, function(sender, evt)
 					{
+						alert("caught fired event");
 						var e = evt.getProperty('event');
 						var cell = evt.getProperty('cell');
 						if(cell != null){
@@ -343,27 +345,31 @@
 		}
 		
 		function objectTest(){
-			var GV = new GraphView(viewArray, document.getElementById('GraphDiv'));
-			var LV = new ListView(viewArray, document.getElementById('listDiv'));
+			var GV = new GraphView(viewArray, document.getElementById('graphFrame').contentWindow.document.getElementById('GraphDiv'));
+			var LV = new ListView(viewArray, document.getElementById('listFrame').contentWindow.document.getElementById('ListDiv'));
 			GV.JSONToGraph(JSONtestinput);
 			var TV = new TreeView(viewArray, document.getElementById('treeDiv'), 7, function(n){if (n > 1) return [n-1,n-2]; else return [];}, function(n){return n.toString()}, function(n){alert("Number "+n.toString());});
 			textQuerySetup("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?X WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?X }", 10, "http://dbpedia.org/sparql");
 		}
 	</script>
 </head>
-<!--<body onload="JSONToGraph(JSONtestinput, document.getElementById('graphDiv'))">-->
+
+
 <body onload="objectTest()">
 
 <div id="errorDiv"></div>
 <div id="statusDiv"></div>
 <div id="plainTextDiv"></div>
-<div id="listDiv"></div>
 <div id="treeDiv"></div>
 <div id="textQueryDiv">Click Here</div>
+<iframe src="iframeDiv/ListView/ListDiv" id="listFrame" title="List View"
+style="width:500px;height:500px;"></iframe>
+<iframe src="iframeDiv/GraphView/GraphDiv" id="graphFrame" title="Graph View"
+style="width:500px;height:500px;"></iframe>
+
 <form>
 	<label>Look up a Schema Diagram:</label>
 	<input type="text" id="schemaAddress" style="width:500px;"></input>
 </form>
-<div id="GraphDiv" style="position:relative;height:500px;width:500px;"></div>
 </body>
 </html>

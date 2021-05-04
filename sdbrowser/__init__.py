@@ -28,6 +28,10 @@ def create_app():
     def parseTest():
         return render_template('parseTest.html')
         
+    @app.route('/graphView')
+    def graphView():
+        return render_template('graphView.html')
+        
     @app.route('/client')
     def client():
         return render_template('client.html')

@@ -3,7 +3,8 @@ import json
 
 #plan: run sparql queries to retrieve a graph with positioning information
 #then convert graph to JSON, in some modular way
-#intermediate representation: adjacency list (di)graph - list of pairs of object/edge
+#intermediate representation: adjacency list (di)graph - list of pairs of
+#object/edge
 
 XSCALE = 500
 YSCALE = 500
@@ -17,9 +18,13 @@ def main(endpoint, queryEndpoint = ""):
     #stock graph with edges
     #get entity positions
     wrapper = SPARQLWrapper(endpoint)
-    wrapper.setQuery("""PREFIX opla-sd: <http://ontologydesignpatterns.org/opla-sd#>
+    wrapper.setQuery("""PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX opla-sd: <http://ontologydesignpatterns.org/opla-sd#>
         SELECT ?N ?P ?X ?Y WHERE { ?N opla-sd:entityPosition ?P .
-        ?P opla-sd:entityPositionX ?X . ?P opla-sd:entityPositionY ?Y}""")
+        ?P opla-sd:entityPositionX ?X . ?P opla-sd:entityPositionY ?Y
+  			FILTER NOT EXISTS { ?N rdf:type owl:DatatypeProperty }
+        }""")
     wrapper.setReturnFormat(JSON)
     results = wrapper.query().convert()
 
@@ -64,6 +69,18 @@ def main(endpoint, queryEndpoint = ""):
         for binding in results["results"]["bindings"]:
             new_pair = (binding["P"]["value"], binding["R"]["value"])
             inter[i][1].append(new_pair)
+
+    #Get remaining property edges! Sometimes these are stored not as restrictions
+    #but as rdfs:domain and rdfs:range triples.
+    for i in range(len(inter)):
+        wrapper.setQuery("""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT ?P ?R WHERE { ?P rdfs:domain <""" + inter[i][0] +
+            """> . ?P rdfs:range ?R }""")
+        wrapper.setReturnFormat(JSON)
+        results = wrapper.query().convert()
+        for binding in results["results"]["bindings"]:
+            new_pair = (binding["P"]["value"], binding["R"]["value"])
+            inter[i][1].append(new_pair)
     #now all edges should be in the abstract graph 'inter'
 
     #construct JSON output. This will be structured as a Python dict, and
@@ -100,11 +117,23 @@ def main(endpoint, queryEndpoint = ""):
                 eArr["ArrowType"] = "Solid"
             eArr["Source"] = nBox["Id"]
             eArr["Target"] = e[1]
-            ret["Arrows"].append(eArr)
             eArr["Query"] = "SELECT ?X ?Z WHERE { ?X <" + e[0] + "> ?Z }"
             eArr["Limit"] = 50
             eArr["Endpoint"] = queryEndpoint
-            
+            ret["Arrows"].append(eArr)
+    #by default, no arrow waypoints have been set. However, we want to set them for
+    #edges with shared domain and range, because the default mxGraph behavior for those
+    #is to overlay them.
+    for i in range(len(ret["Arrows"])):
+            for j in range(i):
+                e = ret["Arrows"][i]
+                f = ret["Arrows"][j]
+                if e["Source"] == f["Target"] and f["Source"] == e["Target"]:
+                    se = getSource(e, ret)
+                    sf = getSource(f, ret)
+                    d = deOverlay(se["XOffset"], se["YOffset"], se["XSize"], se["YSize"], sf["XOffset"], sf["YOffset"], sf["XSize"], sf["YSize"])
+                    e["Waypoints"] = d[0]
+                    f["Waypoints"] = d[1]
     
 
     print(json.dumps(ret))
@@ -125,7 +154,35 @@ def getEdgeLabel(e):
 #takes a node of the abstract graph, and returns what its size should be
 #in the schema diagram as a pair (x,y)
 def getSize(n):
-        return (100,100)
+        return (5*len(getNodeLabel(n)) + 20, 30)
+
+#takes positions, x and y sizes of source and target for two contrary arrows.
+#returns a pair containing waypoints for each.
+def deOverlay(x1,y1,xs1,ys1,x2,y2,xs2,ys2):
+    #get centroids
+    xc1 = x1 + xs1/2
+    yc1 = y1 + ys1/2
+    xc2 = x2 + xs2/2
+    yc2 = y2 + ys2/2
+    #get vector from c1 to c2
+    vx = xc2 - xc1
+    vy = yc2 - yc1
+    #get orthogonal vector to v
+    ux = -vy
+    uy = vx
+    #create a "diamond" shape - waypoints are displaced by +- 1/2 u from the midpoint of v
+    xw1 = xc1 + vx/2 + ux/2
+    yw1 = yc1 + vy/2 + uy/2
+    xw2 = xc1 + vx/2 - ux/2
+    yw2 = yc1 + vy/2 - uy/2
+    return ([(xw1,yw1)],[(xw2,yw2)])
+
+#gets the Box that is the source of arrow e, according to pre-JSON representation rep
+def getSource(e, rep):
+    for B in rep["Boxes"]:
+        if B["Id"] == e["Source"]:
+            return B
+    
 
 def newID():
     global CURRENT_ID

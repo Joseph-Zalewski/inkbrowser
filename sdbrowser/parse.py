@@ -142,13 +142,15 @@ def main(endpoint, queryEndpoint = ""):
 #takes a node of the abstract graph, and returns what its label should be
 #in the schema diagram
 def getNodeLabel(n):
-        segments = n[0].split("#")
+        segments = n[0].split("/")
+        segments = segments[len(segments)-1].split("#")
         return segments[len(segments)-1]
 
 #takes an edge of the abstract graph, and returns what its label should be
 #in the schema diagram
 def getEdgeLabel(e):
-        segments = e[0].split("#")
+        segments = e[0].split("/")
+        segments = segments[len(segments)-1].split("#")
         return segments[len(segments)-1]
 
 #takes a node of the abstract graph, and returns what its size should be

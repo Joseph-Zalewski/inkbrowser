@@ -1,0 +1,641 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.w3.org/2002/07/owl#"
+     xml:base="http://www.w3.org/2002/07/owl"
+     xmlns:cdt="http://w3id.org/lindt/custom_datatypes#"
+     xmlns:geo="http://www.opengis.net/ont/geosparql#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:kwgr="http://stko-roy.geog.ucsb.edu/lod/resource/"
+     xmlns:opla="http://ontologydesignpatterns.org/opla#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:sosa="http://www.w3.org/ns/sosa/"
+     xmlns:time="http://www.w3.org/2006/time#"
+     xmlns:kwg-ont="http://stko-roy.geog.ucsb.edu/lod/ontology/">
+    <Ontology/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.w3.org/2006/time#inXSDDateTime -->
+
+    <AnnotationProperty rdf:about="http://www.w3.org/2006/time#inXSDDateTime"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/ObservedProperty -->
+
+    <AnnotationProperty rdf:about="http://www.w3.org/ns/sosa/ObservedProperty"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/isFeatureOfInterestOf -->
+
+    <AnnotationProperty rdf:about="http://www.w3.org/ns/sosa/isFeatureOfInterestOf"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Datatypes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://w3id.org/lindt/custom_datatypes#angle -->
+
+    <rdfs:Datatype rdf:about="http://w3id.org/lindt/custom_datatypes#angle"/>
+    
+
+
+    <!-- http://w3id.org/lindt/custom_datatypes#time -->
+
+    <rdfs:Datatype rdf:about="http://w3id.org/lindt/custom_datatypes#time"/>
+    
+
+
+    <!-- http://w3id.org/lindt/custom_datatypes#ucum -->
+
+    <rdfs:Datatype rdf:about="http://w3id.org/lindt/custom_datatypes#ucum"/>
+    
+
+
+    <!-- http://www.opengis.net/ont/geosparql#wktLiteral -->
+
+    <rdfs:Datatype rdf:about="http://www.opengis.net/ont/geosparql#wktLiteral"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.opengis.net/ont/geosparql#hasGeometry -->
+
+    <ObjectProperty rdf:about="http://www.opengis.net/ont/geosparql#hasGeometry">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/hasFeatureOfInterest -->
+
+    <ObjectProperty rdf:about="http://www.w3.org/ns/sosa/hasFeatureOfInterest">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/hasMember -->
+
+    <ObjectProperty rdf:about="http://www.w3.org/ns/sosa/hasMember"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/observedProperty -->
+
+    <ObjectProperty rdf:about="http://www.w3.org/ns/sosa/observedProperty">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </ObjectProperty>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/phenomenonTime -->
+
+    <ObjectProperty rdf:about="http://www.w3.org/ns/sosa/phenomenonTime">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.opengis.net/ont/geosparql#asWKT -->
+
+    <DatatypeProperty rdf:about="http://www.opengis.net/ont/geosparql#asWKT">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </DatatypeProperty>
+    
+
+
+    <!-- http://www.w3.org/2006/time#dateTime -->
+
+    <DatatypeProperty rdf:about="http://www.w3.org/2006/time#dateTime">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </DatatypeProperty>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/hasSimpleResult -->
+
+    <DatatypeProperty rdf:about="http://www.w3.org/ns/sosa/hasSimpleResult">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/ontology/Earthquake -->
+
+    <Class rdf:about="http://stko-roy.geog.ucsb.edu/lod/ontology/Earthquake"/>
+    
+
+
+    <!-- http://www.opengis.net/ont/geosparql#Geometry -->
+
+    <Class rdf:about="http://www.opengis.net/ont/geosparql#Geometry">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    </Class>
+    
+
+
+    <!-- http://www.opengis.net/ont/geosparql#Point -->
+
+    <Class rdf:about="http://www.opengis.net/ont/geosparql#Point">
+        <rdfs:subClassOf rdf:resource="http://www.opengis.net/ont/geosparql#Geometry"/>
+    </Class>
+    
+
+
+    <!-- http://www.w3.org/2006/time#Instant -->
+
+    <Class rdf:about="http://www.w3.org/2006/time#Instant">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2006/time#TemporalEntity"/>
+    </Class>
+    
+
+
+    <!-- http://www.w3.org/2006/time#TemporalEntity -->
+
+    <Class rdf:about="http://www.w3.org/2006/time#TemporalEntity"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/ObservableProperty -->
+
+    <Class rdf:about="http://www.w3.org/ns/sosa/ObservableProperty"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/Observation -->
+
+    <Class rdf:about="http://www.w3.org/ns/sosa/Observation"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/ObservationCollection -->
+
+    <Class rdf:about="http://www.w3.org/ns/sosa/ObservationCollection"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/ontology/Earthquake -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/ontology/Earthquake">
+        <sosa:phenomenonTime rdf:resource="http://www.w3.org/2006/time#TemporalEntity"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/Geometry.Point.ci39547879.2021 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/Geometry.Point.ci39547879.2021">
+        <rdf:type rdf:resource="http://www.opengis.net/ont/geosparql#Point"/>
+        <geo:asWKT rdf:datatype="http://www.opengis.net/ont/geosparql#wktLiteral">POINT (-115.8203333 32.7528333)</geo:asWKT>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/earthquake.ci39547879.2021 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/earthquake.ci39547879.2021">
+        <rdf:type rdf:resource="http://stko-roy.geog.ucsb.edu/lod/ontology/Earthquake"/>
+        <geo:hasGeometry rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/Geometry.Point.ci39547879.2021"/>
+        <sosa:phenomenonTime rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/time.ci39547879"/>
+        <rdfs:comment>California Imperial County Seeley</rdfs:comment>
+        <sosa:isFeatureOfInterestOf rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observationcollection.ci39547879"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.depth -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.depth">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Depth of the event in kilometers.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.depthError -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.depthError">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Uncertainty of reported depth of the event in kilometers.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.dmin -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.dmin">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Horizontal distance from the epicenter to the nearest station (in degrees). 1 degree is approximately 111.2 kilometers. In general, the smaller this number, the more reliable is the calculated depth of the earthquake.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.gap -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.gap">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The largest azimuthal gap between azimuthally adjacent stations (in degrees). In general, the smaller this number, the more reliable is the calculated horizontal position of the earthquake. Earthquake locations in which the azimuthal gap exceeds 180 degrees typically have large location and depth uncertainties.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.horizontalError -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.horizontalError">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Uncertainty of reported location of the event in kilometers.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.locationSource -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.locationSource">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The network that originally authored the reported location of this event.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.mag -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.mag">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The magnitude for the event</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magError -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magError">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Uncertainty of reported magnitude of the event. The estimated standard error of the magnitude. The uncertainty corresponds to the specific magnitude type being reported and does not take into account magnitude variations and biases between different magnitude scales. We report an &quot;unknown&quot; value if the contributing seismic network does not supply uncertainty estimates.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magNst -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magNst">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The total number of seismic stations used to calculate the magnitude for this earthquake</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magSource -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magSource">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Network that originally authored the reported magnitude for this event.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magType -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magType">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The method or algorithm used to calculate the preferred magnitude for the event.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.net -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.net">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The ID of a data contributor. Identifies the network considered to be the preferred source of information for this event</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.nst -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.nst">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The total number of seismic stations used to determine earthquake location.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.rms -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.rms">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>The root-mean-square (RMS) travel time residual, in sec, using all weights. This parameter provides a measure of the fit of the observed arrival times to the predicted arrival times for this location. Smaller numbers reflect a better fit of the data. The value is dependent on the accuracy of the velocity model used to compute the earthquake location, the quality weights assigned to the arrival time data, and the procedure used to locate the earthquake.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.status -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.status">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Indicates whether the event has been reviewed by a human.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.type -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.type">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservableProperty"/>
+        <rdfs:label>Type of seismic event.</rdfs:label>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.depth.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.depth.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#ucum">4.89</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.depth"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.depthError.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.depthError.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#ucum">1.07</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.depthError"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.dmin.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.dmin.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#angle">0.1244</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.dmin"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.gap.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.gap.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#angle">78.0</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.gap"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.horizontalError.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.horizontalError.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#ucum">0.38</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.horizontalError"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.locationSource.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.locationSource.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult>ci</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.locationSource"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.mag.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.mag.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#ucum">2.13</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.mag"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.magError.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magError.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#ucum">0.227</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magError"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.magNst.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magNst.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#ucum">25.0</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magNst"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.magSource.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magSource.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult>ci</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magSource"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.magType.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magType.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult>ml</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.magType"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.net.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.net.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult>ci</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.net"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.nst.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.nst.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">29</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.nst"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.rms.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.rms.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult rdf:datatype="http://w3id.org/lindt/custom_datatypes#time">0.22</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.rms"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.status.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.status.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult>automatic</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.status"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observation.type.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observation.type.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+        <sosa:hasSimpleResult>earthquake</sosa:hasSimpleResult>
+        <sosa:ObservedProperty rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observableproperty.type"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/observationcollection.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/observationcollection.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/ns/sosa/ObservationCollection"/>
+        <sosa:hasFeatureOfInterest rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/earthquake.ci39547879.2021"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.depth.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.depthError.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.dmin.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.gap.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.horizontalError.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.locationSource.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.mag.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magError.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magNst.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magSource.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.magType.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.net.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.nst.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.rms.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.status.ci39547879"/>
+        <sosa:hasMember rdf:resource="http://stko-roy.geog.ucsb.edu/lod/resource/observation.type.ci39547879"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://stko-roy.geog.ucsb.edu/lod/resource/time.ci39547879 -->
+
+    <NamedIndividual rdf:about="http://stko-roy.geog.ucsb.edu/lod/resource/time.ci39547879">
+        <rdf:type rdf:resource="http://www.w3.org/2006/time#Instant"/>
+        <time:inXSDDateTime rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-02-10T19:40:06.630000+00:00</time:inXSDDateTime>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.w3.org/2006/time#TemporalEntity -->
+
+    <NamedIndividual rdf:about="http://www.w3.org/2006/time#TemporalEntity"/>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/Observation -->
+
+    <NamedIndividual rdf:about="http://www.w3.org/ns/sosa/Observation">
+        <sosa:observedProperty rdf:resource="http://www.w3.org/ns/sosa/ObservationProperty"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/ObservationCollection -->
+
+    <NamedIndividual rdf:about="http://www.w3.org/ns/sosa/ObservationCollection">
+        <sosa:hasMember rdf:resource="http://www.w3.org/ns/sosa/Observation"/>
+    </NamedIndividual>
+    
+
+
+    <!-- http://www.w3.org/ns/sosa/ObservationProperty -->
+
+    <NamedIndividual rdf:about="http://www.w3.org/ns/sosa/ObservationProperty"/>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+

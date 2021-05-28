@@ -214,12 +214,31 @@
 		{	
 			var div = this.DOMNode.getElementsByTagName("div")[0];
 			try{
+			alert('Received ' + str);
 				input = JSON.parse(str);
-				div.innerHTML ='<ul>';
+				var output;
+				output ='<ul>';
 				for(var result of input.results.bindings){
-					div.innerHTML = div.innerHTML + '<li>' + result.X.value + '</li>';
+					output = output + '<li>' + result.X.value + '</li>';
 				}
-				div.innerHTML = div.innerHTML + '</ul>';
+				output = output + '</ul>';
+				div.innerHTML = output;
+				var items = div.getElementsByTagName('li');
+				var thisref = this;
+				for(var i = 0; i < items.length; i++){
+					var li = items.item(i);
+					var POQuery = "SELECT ?P ?O WHERE { <" + li.innerHTML + "> ?P ?O . }";
+					send = function(results){
+						var msg = {text:results,query:thisref.query,limit:50,endpoint:thisref.endpoint};
+						for(var view of thisref.collection){
+							view.processNotify(msg);
+						}
+					}
+					tr = function(){
+						AJAXQuery(POQuery + ' LIMIT 50', thisref.endpoint, send);
+					};
+					li.onclick = tr;
+				}
 			}
 			catch{
 				div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
@@ -253,6 +272,64 @@
 			};
 			
 			
+		//TripleView subclass
+		//displays a list of predicate-object pairs
+		function TripleView(collection, DOMNode){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+			this.query = '';
+			this.limit = 10;
+			this.endpoint = '';
+			this.DOMNode.innerHTML = '<div></div><button>Load More Results</button>';
+		}
+		
+		TripleView.prototype = Object.create(View.prototype);
+		
+		Object.defineProperty(TripleView.prototype, 'constructor', {value: TripleView, enumerable: false, writable: true,});
+		
+		Object.defineProperty(TripleView.prototype, 'processJSONResults', {value: function(str)
+		{	
+			var div = this.DOMNode.getElementsByTagName("div")[0];
+			try{
+				input = JSON.parse(str);
+				var output;
+				output ='<ul>';
+				for(var result of input.results.bindings){
+					output = output + '<li>' + result.P.value + ', ' + result.O.value + '</li>';
+				}
+				output = output + '</ul>';
+				div.innerHTML = output;
+			}
+			catch{
+				div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
+			}
+		}});
+		
+		//Needs a query, for variables P, O. TripleView will use the query to load more results if needed.
+		//By default TripleView assumes any text passed to it is a text representation
+		//of JSON SPARQL query results for a query with variables P,O.
+		TripleView.prototype.processNotify = function(msg)
+			{
+				if(msg.text != undefined){
+					this.processJSONResults(msg.text);
+				}
+				//if the message has no text, then the TripleView assumes it is supposed to run a new query.
+				else{
+					var thisref = this;
+					AJAXQuery(msg.query + ' LIMIT ' + msg.limit, msg.endpoint, function(str){
+						thisref.processJSONResults(str);
+					});
+				}
+				this.query = msg.query;
+				this.limit = msg.limit;
+				this.endpoint = msg.endpoint;
+				var thisref = this;
+				var tr = function(){
+					trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint, limit:(2*thisref.limit)});
+				};
+				this.DOMNode.getElementsByTagName('button')[0].onclick = tr;
+			};
+		
 		//TreeView class
 		//root is some object, getChildren(node) is some function which takes an object and returns its children as an array; together these specify an abstract tree. It is the instantiator's responsibility to ensure this tree is not infinite. The TreeView displays this tree as an HTML tree. display() is some function that takes nodes of the abstract tree and converts them into strings to display.
 		function TreeView(collection, DOMNode, root, getChildren, display, action){
@@ -348,8 +425,9 @@
 		function objectTest(){
 			//var GV = new GraphView(viewArray, document.getElementById('graphFrame').contentWindow.document.getElementById('GraphDiv'));
 			var LV = new ListView(viewArray, document.getElementById('listFrame').contentWindow.document.getElementById('ListDiv'));
+			var TV = new TripleView(viewArray, document.getElementById('tripleFrame').contentWindow.document.getElementById('TripleDiv'));
 			//GV.JSONToGraph(JSONtestinput);
-			var TV = new TreeView(viewArray, document.getElementById('treeFrame').contentWindow.document.getElementById('TreeDiv'), 7, function(n){if (n > 1) return [n-1,n-2]; else return [];}, function(n){return n.toString()}, function(n){alert("Number "+n.toString());});
+			//var TV = new TreeView(viewArray, document.getElementById('treeFrame').contentWindow.document.getElementById('TreeDiv'), 7, function(n){if (n > 1) return [n-1,n-2]; else return [];}, function(n){return n.toString()}, function(n){alert("Number "+n.toString());});
 			textQuerySetup("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?X WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?X }", 10, "http://dbpedia.org/sparql");
 		}
 	</script>
@@ -364,6 +442,8 @@
 <div id="treeDiv"></div>
 <div id="textQueryDiv">Click Here</div>
 <iframe src="iframeDiv/ListView/ListDiv" id="listFrame" title="List View"
+style="width:500px;height:500px;"></iframe>
+<iframe src="iframeDiv/TripleView/TripleDiv" id="tripleFrame" title="Triple View"
 style="width:500px;height:500px;"></iframe>
 <iframe src="graphView" id="graphFrame" title="Graph View"
 style="width:500px;height:500px;"></iframe>

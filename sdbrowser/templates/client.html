@@ -80,107 +80,7 @@
 		View.prototype.processNotify = function(){};
 		//end View class
 		
-		//GraphView subclass.
-		function GraphView(collection, DOMNode){
-			View.call(this, collection);
-			this.DOMNode = DOMNode;
-			//holds identifiers of Views that receive data from this one
-			this.recipients = [];
-		}
-		GraphView.prototype = Object.create(View.prototype);
-		Object.defineProperty(GraphView.prototype, 'constructor', {value: GraphView, enumerable: false, writable: true,});
-		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: 
-		//Contract: Parameters: String JSONString.
-		//Constructs the mxGraph encoded by JSONString, if there is one, displaying it in the DOM element this.DOMNode.
-		function(JSONString)
-		{	
-			var pageElement = this.DOMNode;
-			var schema = JSON.parse(JSONString);
-			if (!mxClient.isBrowserSupported())
-			{
-				mxUtils.error('Browser is not supported!', 200, false);
-			}
-			else{
-				mxEvent.disableContextMenu(pageElement);
-				var diagram = new mxGraph(pageElement);
-				var parent = diagram.getDefaultParent();
-				var nodes = {};
-				var edges = {};
-				diagram.getModel().beginUpdate();
-				try{
-					for(var b of schema.Boxes){
-						nodes[b.Id] = diagram.insertVertex(parent, null, b.Label,b.XOffset,b.YOffset,b.XSize,b.YSize, 'fontColor='+b.TextColorHex+';fillColor='+b.FillColorHex+';'+b.AdditionalMxStyle);
-					}
-					
-					for(var e of schema.Arrows){
-						//create edgestyle for this edge
-						mxEdgeStyle['sd'+e.Id] = this.constructEdgestyle(e);
-						mxStyleRegistry.putValue('sd'+e.Id, mxEdgeStyle['sd'+e.Id]);
-						//mxUtils.error(mxStyleRegistry.getValue('sd'+e.Id), 200, false);
-						//insert the edge
-						edges[e.Id] = diagram.insertEdge(parent, null, e.Label, nodes[e.Source], nodes[e.Target], 'edgeStyle=sd'+e.Id+';'+e.AdditionalMxStyle);
-					}
-					var collection = this.collection;
-					pageElement.onclick = function(){diagram.fireEvent(new mxEventObject('click'));};
-					diagram.addListener(mxEvent.CLICK, function(sender, evt)
-					{
-						var e = evt.getProperty('event');
-						var cell = evt.getProperty('cell');
-						if(cell != null){
-							for(b of schema.Boxes){
-								if(nodes[b.Id] == cell){
-								var q = b.Query + ' LIMIT ' + b.Limit;
-								var box = b;
-									AJAXQuery(q, box.Endpoint,
-										function(str){
-											var msg = {text: str, query: box.Query, limit: box.Limit, endpoint: box.Endpoint};
-											for(var V of collection){
-												V.processNotify(msg);
-											}
-											});
-								}
-							}
-							for(e of schema.Arrows){
-								if(edges[e.Id] == cell){
-								var q = e.Query + ' LIMIT ' + e.Limit;
-								var edge = e;
-									AJAXQuery(q, edge.Endpoint,
-										function(str){
-											var msg = {text: str, query: edge.Query, limit: edge.Limit, endpoint: edge.Endpoint};
-											for(var V of collection){
-												V.processNotify(msg);
-											}
-											});
-								}
-							}
-						}
-					});
-				}
-				catch(err){
-					errorDiv.innerHTML = err.toString();
-				}
-				finally{
-					diagram.getModel().endUpdate();
-				}
-			}
-		}});
-		Object.defineProperty(GraphView.prototype, 'constructEdgestyle', {value:
-		//Contract: e is an Arrow object extracted, e.g., from a parsed internal JSON representation. Returns an mxEdgestyle which encodes the routing information for e, based on e.Waypoints, if that field is defined. Otherwise returns the default mxGraph elbow style.
-		function(e)
-		{	
-			var style;
-			if(e.Waypoints){
-				style = function(state,source,target,points,result){
-					for(var pt of e.Waypoints){
-						result.push(new mxPoint(pt[0],pt[1]));
-					}
-				}
-			}else{
-				style = mxEdgeStyle.ElbowConnector;
-			}
-			return style;
-		}});
-		//end GraphView subclass
+
 		
 		//PlainTextView subclass.
 		function PlainTextView(collection, DOMNode){
@@ -214,31 +114,33 @@
 		{	
 			var div = this.DOMNode.getElementsByTagName("div")[0];
 			try{
-			alert('Received ' + str);
 				input = JSON.parse(str);
 				var output;
+				var valuesUsed = new Set();
 				output ='<ul>';
 				for(var result of input.results.bindings){
-					output = output + '<li>' + result.X.value + '</li>';
+					if(!valuesUsed.has(result.X.value)){
+						output = output + '<li>' + result.X.value + '</li>';
+						valuesUsed.add(result.X.value);
+					}
 				}
 				output = output + '</ul>';
 				div.innerHTML = output;
 				var items = div.getElementsByTagName('li');
 				var thisref = this;
-				for(var i = 0; i < items.length; i++){
-					var li = items.item(i);
+				div.addEventListener('click', function(e){
+					if(e.target.nodeName.toUpperCase() != 'LI') return;
+					//alert(e.target.nodeName);
+					var li = e.target;
 					var POQuery = "SELECT ?P ?O WHERE { <" + li.innerHTML + "> ?P ?O . }";
 					send = function(results){
-						var msg = {text:results,query:thisref.query,limit:50,endpoint:thisref.endpoint};
-						for(var view of thisref.collection){
-							view.processNotify(msg);
+							var msg = {text:results,query:POQuery,limit:50,endpoint:thisref.endpoint,type:'POresults'};
+							for(var view of thisref.collection){
+								view.processNotify(msg);
+							}
 						}
-					}
-					tr = function(){
-						AJAXQuery(POQuery + ' LIMIT 50', thisref.endpoint, send);
-					};
-					li.onclick = tr;
-				}
+					AJAXQuery(POQuery + ' LIMIT 50', thisref.endpoint, send);
+				});
 			}
 			catch{
 				div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
@@ -251,6 +153,9 @@
 		//fields from it.
 		ListView.prototype.processNotify = function(msg)
 			{
+				if(msg.type != "Xresults"){
+					return;
+				}
 				if(msg.text != undefined){
 					this.processJSONResults(msg.text);
 				}
@@ -266,7 +171,7 @@
 				this.endpoint = msg.endpoint;
 				var thisref = this;
 				var tr = function(){
-					trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint, limit:(2*thisref.limit)});
+					trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint, limit:(2*thisref.limit)}, type="Xresults");
 				};
 				this.DOMNode.getElementsByTagName('button')[0].onclick = tr;
 			};
@@ -293,11 +198,11 @@
 			try{
 				input = JSON.parse(str);
 				var output;
-				output ='<ul>';
+				output ='<table><tr><th>Predicate</th><th>Object</th></tr>';
 				for(var result of input.results.bindings){
-					output = output + '<li>' + result.P.value + ', ' + result.O.value + '</li>';
+					output = output + '<tr><td>' + result.P.value + '</td><td>' + result.O.value + '</td></tr>';
 				}
-				output = output + '</ul>';
+				output = output + '</table>';
 				div.innerHTML = output;
 			}
 			catch{
@@ -310,6 +215,7 @@
 		//of JSON SPARQL query results for a query with variables P,O.
 		TripleView.prototype.processNotify = function(msg)
 			{
+				if(msg.type != 'POresults') return;
 				if(msg.text != undefined){
 					this.processJSONResults(msg.text);
 				}

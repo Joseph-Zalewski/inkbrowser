@@ -110,7 +110,7 @@
 								var box = b;
 									AJAXQuery(q, box.Endpoint,
 										function(str){
-											var msg = {text: str, query: box.Query, limit: box.Limit, endpoint: box.Endpoint};
+											var msg = {text: str, query: box.Query, limit: box.Limit, endpoint: box.Endpoint,type:'Xresults'};
 											for(var V of collection){
 												V.processNotify(msg);
 											}
@@ -123,7 +123,7 @@
 								var edge = e;
 									AJAXQuery(q, edge.Endpoint,
 										function(str){
-											var msg = {text: str, query: edge.Query, limit: edge.Limit, endpoint: edge.Endpoint};
+											var msg = {text: str, query: edge.Query, limit: edge.Limit, endpoint: edge.Endpoint,type:'Xresults'};
 											for(var V of collection){
 												V.processNotify(msg);
 											}

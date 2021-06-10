@@ -15,6 +15,10 @@ def create_app():
     app.config.from_mapping(
         SECRET_KEY = 'dev'
     )
+
+    @app.route('/')
+    def home():
+        return render_template('home.html')
     
     @app.route('/iframeDiv/<title>/<name>')
     def graphFrame(title, name):
@@ -35,6 +39,18 @@ def create_app():
     @app.route('/client')
     def client():
         return render_template('client.html')
+
+    @app.route('/hierarchy')
+    def hierarchy():
+        return render_template('hierarchy.html')
+
+    @app.route('/statistics')
+    def statistics():
+        return render_template('statistics.html')
+
+    @app.route('/search')
+    def search():
+        return render_template('search.html')
         
     @app.route('/query', methods = ('GET', 'POST'))
     def query():

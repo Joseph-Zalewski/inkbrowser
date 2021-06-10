@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<title>Search classes in Knowledge Graphs</title>
+<style> 
+    .scroll {
+        max-height: 500px;
+        overflow: auto;
+    }
+    .center {
+        width: 100%;
+        text-align:center;
+    }
+
+</style>
+<script type="text/javascript">
+        var viewArray = [];
+        //generates unique identifiers for view objects
+        var currentIdentifier = 0;
+        function nextIdentifier(){
+            currentIdentifier = currentIdentifier + 1;
+            return currentIdentifier;
+        }
+
+        function View(collection){
+            this.collection = collection;
+            collection.push(this);
+            this.identifier = nextIdentifier();
+        }
+        View.prototype.processNotify = function(){};
+        //end View class
+        
+        function ListView(collection, DOMNode){
+            View.call(this, collection);
+            this.DOMNode = DOMNode;
+            this.query = '';
+            // this.limit = 10;
+            this.endpoint = '';
+            // this.DOMNode.innerHTML = '<div></div><button>Load More Results</button>';
+            this.DOMNode.innerHTML = '<div></div>';
+        }
+        
+        ListView.prototype = Object.create(View.prototype);
+        
+        Object.defineProperty(ListView.prototype, 'constructor', {value: ListView, enumerable: false, writable: true,});
+        
+        Object.defineProperty(ListView.prototype, 'processJSONResults', {value: function(str)
+        {   
+            var div = this.DOMNode.getElementsByTagName("div")[0];
+            try{
+                input = JSON.parse(str);
+                // div.innerHTML ='<ul>';
+                for(var result of input.results.bindings){
+                    div.innerHTML = div.innerHTML + '<li> entity: ' + result.x.value + ' </li> ';
+                    // div.innerHTML = div.innerHTML + + result.x.value;
+                    div.innerHTML = div.innerHTML + '<li> label: ' + result.y.value +  ' </li>';
+                    // div.innerHTML = div.innerHTML + result.y.value;
+                    div.innerHTML = div.innerHTML + '<li> provenance: ' + result.z.value + ' </li>';
+                    // div.innerHTML = div.innerHTML + result.z.value;
+                    div.innerHTML = div.innerHTML + '<p></p>';
+                    // div.innerHTML = div.innerHTML + result.z.value;
+                    // div.innerHTML = div.innerHTML + '<p></p>';
+                }
+                div.innerHTML = div.innerHTML + '</ul>';
+            }
+            catch{
+                div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
+            }
+        }});
+        
+        //Needs a query, for a single variable X. ListView will use the query to load more results if needed.
+        //By default ListView assumes any text passed to it is a text representation
+        //of JSON SPARQL query results for a query with a single variable X, and extract results.bindings.X.value
+        //fields from it.
+        ListView.prototype.processNotify = function(msg)
+            {
+                if(msg.text != undefined){
+                    this.processJSONResults(msg.text);
+                }
+                //if the message has no text, then the ListView assumes it is supposed to run a new query.
+                else{
+                    var thisref = this;
+                    // AJAXQuery(msg.query + ' LIMIT ' + msg.limit, msg.endpoint, function(str){
+                    AJAXQuery(msg.query, msg.endpoint, function(str){
+                        thisref.processJSONResults(str);
+                    });
+                }
+                this.query = msg.query;
+                // this.limit = msg.limit;
+                this.endpoint = msg.endpoint;
+                var thisref = this;
+                var tr = function(){
+                    // trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint, limit:(2*thisref.limit)});
+                    trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint});
+                };
+                // this.DOMNode.getElementsByTagName('button')[0].onclick = tr;
+            };
+
+        function textQuerySetup(inputVal){
+        // function textQuerySetup(query, inputVal, endpoint){
+
+            endpoint = "http://cpd-fuseki.cs.ksu.edu/x-project-06-04/query"; 
+            query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX kwg: <http://stko-roy.geog.ucsb.edu/lod/ontology/> PREFIX dc: <http://purl.org/dc/terms/> PREFIX spoke: <http://spoke/ontology/> PREFIX cosmo: <http://micra.com/COSMO/COSMO.owl#> PREFIX scales: <http://scales-okn.org/schema#> PREFIX ufokn: <http://schema.ufokn.org/core/v1/FeatureAtRisk#> PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?x ?y ?z WHERE { ?x rdf:type owl:Class ; rdfs:label ?y ; dc:provenance ?z FILTER regex(?y, \"" + inputVal + "\", \"i\")}";
+            var div = document.getElementById("textQueryDiv");
+            if(div){
+                div.addEventListener("click", function(){
+                    AJAXQuery(query, endpoint, function(str){
+                        var msg = {text: str, query: query, endpoint: endpoint};
+                        for(var V of viewArray){
+                            V.processNotify(msg);
+                        }
+                    });
+                });
+            }
+        }       
+        //Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. callback must be a function capable of taking a string argument. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, callback() will be called on the response.
+        function AJAXQuery(query, endpoint, callback){
+            request = new XMLHttpRequest();
+            request.open('POST', '/query', true);
+            request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            request.send('query='+query+'&endpoint='+endpoint);
+
+            request.onreadystatechange = function(){
+                //alert('readystate changed, status'+this.status.toString());
+                if(this.readyState == 4 && this.status == 200){
+                    //alert('Response received:'+request.responseText);
+                    callback(request.responseText);
+                }
+            }
+
+        }
+        //this function is a hook for buttons and other HTML elements to access the view objects through their message bus.
+        function trigger(identifier, msg){
+            for (var view of viewArray){
+                if (view.identifier == identifier)
+                {
+                    view.processNotify(msg);
+                }
+            }
+        }
+
+        function objectTest(){  
+            var LV = new ListView(viewArray, document.getElementById('listDiv'));
+        } 
+
+</script>
+</head>
+
+<body onload="objectTest()">
+    {% extends "base.html" %}
+    {% block content %}
+    <div class="search-container">
+        <div class="center">
+        <input type="text" placeholder="Search.." id="myInput">
+        <input type="button" value="Search" id="textQueryDiv" onclick="getInputValue()">
+    </div>
+
+    <script type="text/javascript">
+    function getInputValue(){
+        // Selecting the input element and get its value 
+        var inputVal = document.getElementById('myInput').value;
+        textQuerySetup(inputVal);
+    }
+    </script>
+    <div class="container">
+        <div class="row">
+           <div class="col-md-12">            
+                <div class="card scroll">
+                    <div class="card-header">
+                        <div class="card-title"><b>Search Results</b></div>
+                    </div>
+                    <div class="card-body">
+                        <div id="listDiv"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>

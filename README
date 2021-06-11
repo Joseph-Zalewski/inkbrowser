@@ -1,15 +1,20 @@
+Overview:
+------
 This repo includes combined code for InkBrowser and the KnowWhereGraph (KWG) Cross-Project Demonstrator.
 InkBrowser is a knowledge graph browser with a visual component.
 KWG Cross-Project Demonstrator is ???
 
-The project is built using Python webapp framework Flask (flask.palletsprojects.com).
+The project is built using Python webapp framework Flask (flask.palletsprojects.com) and Javascript graph rendering library mxGraph (jgraph.github.io/mxgraph/)
+
+
 Important Files:
+--------
 <code>sdbrowser/__init__.py</code> - contains the main code for the Flask server. 
 <code>sdbrowser/templates/client.html</code> - contains the bulk of the Javascript code for the browser.
 <code>sdbrowser/templates/graphView.html</code> - contains the Javascript code specifically supporting the visual browsing component.
 
-Other files of interest:
-
+Other Points of Interest:
+------
 InkBrowser uses a JSON format to store ontology schema diagrams - which are used to navigate through a knowledge graph by a point-and-click interface. The JSON format 
 specifies the geometric layout and style of the diagram as well as its action when clicked, in the form of SPARQL queries to be run against a SPARQL endpoint.
 sdbrowser/templates/schema1.json is a readable example of the internal schema format (only need to know if you are creating schema diagrams.)

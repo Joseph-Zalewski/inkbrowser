@@ -4,9 +4,9 @@ KWG Cross-Project Demonstrator is ???
 
 The project is built using Python webapp framework Flask (flask.palletsprojects.com).
 Important Files:
-sdbrowser/__init__.py - contains the main code for the Flask server. 
-sdbrowser/templates/client.html - contains the bulk of the Javascript code for the browser.
-sdbrowser/templates/graphView.html - contains the Javascript code specifically supporting the visual browsing component.
+<code>sdbrowser/__init__.py</code> - contains the main code for the Flask server. 
+<code>sdbrowser/templates/client.html</code> - contains the bulk of the Javascript code for the browser.
+<code>sdbrowser/templates/graphView.html</code> - contains the Javascript code specifically supporting the visual browsing component.
 
 Other files of interest:
 
@@ -18,7 +18,7 @@ The Javascript class View: This is used for various user interfaces.
 
 Implementing a new View subclass:
 The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other views, this must be done by implementing the processNotify() function (this should have a single parameter expecting a Javascript Object, but it doesn't yet); to
-pass information *to* the other views, you do something like (...create message object M...); for(var v of collection){v.processNotify(M)};
+pass information *to* the other views, you do something like <code>(...create message object M...); for(var v of collection){v.processNotify(M)};</code>
 
 NOTE: InkBrowser's existing code uses old-style plain Javascript subclasses, not ECMAScript 2015 classes, etc. I do not make any guarantees about compatibility with new Javascript features other than guarantees they themselves make. The basic pattern for making a subclass of View, the old-fashioned way, is the following (all text in <<<>>> is placeholder text):
 

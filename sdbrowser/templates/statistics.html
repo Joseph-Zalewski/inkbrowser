@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      table {
+        width:100%;
+      }
+      table, th, td {
+        border: 1px solid black;
+      }
+      th, td {
+        padding: 5px;
+        text-align: left;
+      }
+      #t01 tr:nth-child(even) {
+        background-color: #eee;
+      }
+      #t01 tr:nth-child(odd) {
+       background-color: #fff;
+      }
+      #t01 th {
+        background-color: black;
+        color: white;
+      }
+    </style>
+    <!-- <script type="text/javascript"> -->
+ <!--    // function textQuerySetup(query, endpoint){
+    // var div = document.getElementById("textQueryDiv");
+    // div.addEventListener("click", function(){
+      // AJAXQuery(query + " LIMIT " + limit, endpoint, function(str){
+        // var msg = {text: str, query: query, limit: limit, endpoint: endpoint};
+      // AJAXQuery(query, endpoint, function(str){
+      //   var msg = {text: str, query: query, endpoint: endpoint};
+      //   for(var V of viewArray){
+          // V.processNotify(msg);
+        // }
+      // });
+    // }
+  // }
+
+
+  // function ListView(collection, DOMNode){
+  //   View.call(this, collection);
+  //   this.DOMNode = DOMNode;
+  //   this.query = '';
+  //   // this.limit = 10;
+  //   this.endpoint = '';
+  //   // this.DOMNode.innerHTML = '<div></div><button>Load More Results</button>';
+  //   this.DOMNode.innerHTML = '<div></div>';
+  // }
+  
+  // ListView.prototype = Object.create(View.prototype);
+  
+  // Object.defineProperty(ListView.prototype, 'constructor', {value: ListView, enumerable: false, writable: true,});
+  
+  // Object.defineProperty(ListView.prototype, 'processJSONResults', {value: function(str)
+  // { 
+  //   var div = this.DOMNode.getElementsByTagName("div")[0];
+  //   try{
+  //     input = JSON.parse(str);
+  //     // div.innerHTML ='<ul>';
+  //     for(var result of input.results.bindings){
+  //       // div.innerHTML = div.innerHTML + '<li> rdfs:label </li>';
+  //       div.innerHTML = div.innerHTML + result.x.value;
+  //       // div.innerHTML = div.innerHTML + '<li> rdfs:comment </li>';
+  //       // div.innerHTML = div.innerHTML + result.y.value;
+  //     }
+  //     // div.innerHTML = div.innerHTML + '</ul>';
+  //   }
+  //   catch{
+  //     div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
+  //   }
+  // }});
+  
+  // //Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. callback must be a function capable of taking a string argument. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, callback() will be called on the response.
+  // function AJAXQuery(query, endpoint, callback){
+  //   request = new XMLHttpRequest();
+  //   request.open('POST', '/query', true);
+  //   request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  //   request.send('query='+query+'&endpoint='+endpoint);
+
+  //   request.onreadystatechange = function(){
+  //     //alert('readystate changed, status'+this.status.toString());
+  //     if(this.readyState == 4 && this.status == 200){
+  //       //alert('Response received:'+request.responseText);
+  //       callback(request.responseText);
+  //     }
+  //   }
+
+  // }
+
+  //   function objectTest(){  
+  //   // var LV = new ListView(viewArray, document.getElementById('listDiv'));
+  //   // textQuerySetup("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?X WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?X }", "http://dbpedia.org/sparql");
+  //   textQuerySetup("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX owl: <http://www.w3.org/2002/07/owl#Class> SELECT (COUNT (?count) as ?x) WHERE { ?count rdf:type owl:Class }", "http://localhost:3030/xproject/query"); 
+  //   // textQuerySetup2("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX kwg: <http://stko-roy.geog.ucsb.edu/lod/ontology/> SELECT ?x ?y WHERE { kwg:WildFire rdfs:label ?x ; rdfs:comment ?y }", "http://localhost:3030/xproject/query");
+  // } -->
+
+    <!-- </script> -->
+  </head>
+
+  <body>
+    {% extends "base.html" %}
+    {% block content %}
+
+    <table id="t01">
+      <tr>
+        <th>Metrics</th>
+        <th>COSMO</th>
+        <th>KWG</th> 
+        <th>SPOKE</th>
+        <th>SCALES</th>
+        <th>UFOKN</th>
+        <th>Total</th>
+      </tr>
+      <tr>
+        <td>Node</td>
+        <td>24,391</td>
+        <td>220</td>
+        <td>18</td>
+        <td>12</td>
+        <td>22</td>
+        <td>24,663</td>
+      </tr>
+      <tr>
+        <td>Edge</td>
+        <td>1,442</td>
+        <td>0</td>
+        <td>31</td>
+        <td>0</td>
+        <td>18</td>
+        <td>1,491</td>
+      </tr> 
+      <tr>
+        <td>Triple</td>
+        <td>272,100</td>
+        <td>300,918,649</td>
+        <td>173</td>
+        <td>94</td>
+        <td>104</td>
+        <td>301,191,120</td>
+      </tr>
+    </table>
+
+    {% endblock %}
+  </body>
+</html>

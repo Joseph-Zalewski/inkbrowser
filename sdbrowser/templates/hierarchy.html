@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="{{ url_for('static',     filename='css/listree.min.css') }}">
+	<style> 
+		.scroll {
+			max-height: 500px;
+			overflow: auto;
+			/*margin:auto;*/
+		}
+	</style>
+	<script type="text/javascript">
+		//viewArray is global. See 'trigger' below.
+		var viewArray = [];
+		//generates unique identifiers for view objects
+		var currentIdentifier = 0;
+		function nextIdentifier(){
+			currentIdentifier = currentIdentifier + 1;
+			return currentIdentifier;
+		}
+
+		////Class declarations
+		//View class. Represents any independent part of the user interface. Since this is Javascript, subclasses can take arbitrary additional constructor parameters containing information such as the DOM node or DOM nodes they will use to display themselves. However, View has one distinguished parameter, collection, which takes a collection of Views. Subclasses can send messages to other views in this collection by calling their processNotify method. This class should be considered abstract and never instantiated except in the constructor of a subclass.
+		function View(collection){
+			this.collection = collection;
+			collection.push(this);
+			this.identifier = nextIdentifier();
+		}
+		View.prototype.processNotify = function(){};
+		//end View class
+		
+		//GraphView subclass.
+		function GraphView(collection, DOMNode){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+			//holds identifiers of Views that receive data from this one
+			this.recipients = [];
+		}
+		GraphView.prototype = Object.create(View.prototype);
+		Object.defineProperty(GraphView.prototype, 'constructor', {value: GraphView, enumerable: false, writable: true,});
+		Object.defineProperty(GraphView.prototype, 'JSONToGraph', {value: 
+		//Contract: Parameters: String JSONString.
+		//Constructs the mxGraph encoded by JSONString, if there is one, displaying it in the DOM element this.DOMNode.
+		function(JSONString)
+		{	
+			var pageElement = this.DOMNode;
+			var schema = JSON.parse(JSONString);
+			if (!mxClient.isBrowserSupported())
+			{
+				mxUtils.error('Browser is not supported!', 200, false);
+			}
+			else{
+				mxEvent.disableContextMenu(pageElement);
+				var diagram = new mxGraph(pageElement);
+				var parent = diagram.getDefaultParent();
+				var nodes = {};
+				var edges = {};
+				diagram.getModel().beginUpdate();
+				try{
+					for(var b of schema.Boxes){
+						nodes[b.Id] = diagram.insertVertex(parent, null, b.Id,b.XOffset,b.YOffset,b.XSize,b.YSize, 'fontColor='+b.TextColorHex+';fillColor='+b.FillColorHex+';'+b.AdditionalMxStyle);
+					}
+					
+					for(var e of schema.Arrows){
+						//create edgestyle for this edge
+						mxEdgeStyle['sd'+e.Id] = this.constructEdgestyle(e);
+						mxStyleRegistry.putValue('sd'+e.Id, mxEdgeStyle['sd'+e.Id]);
+						//mxUtils.error(mxStyleRegistry.getValue('sd'+e.Id), 200, false);
+						//insert the edge
+						edges[e.Id] = diagram.insertEdge(parent, null, e.Label, nodes[e.Source], nodes[e.Target], 'edgeStyle=sd'+e.Id+';'+e.AdditionalMxStyle);
+					}
+					var collection = this.collection;
+					diagram.addListener(mxEvent.CLICK, function(sender, evt)
+					{
+						var e = evt.getProperty('event');
+						var cell = evt.getProperty('cell');
+						if(cell != null){
+							for(b of schema.Boxes){
+								if(nodes[b.Id] == cell){
+								// var q = b.Query + ' LIMIT ' + b.Limit;
+								var q = b.Query;
+								var box = b;
+									AJAXQuery(q, box.Endpoint,
+										function(str){
+											// var msg = {text: str, query: box.Query, limit: box.Limit, endpoint: box.Endpoint};
+											var msg = {text: str, query: box.Query, endpoint: box.Endpoint};
+											for(var V of collection){
+												V.processNotify(msg);
+											}
+											});
+								}
+							}
+							for(e of schema.Arrows){
+								if(edges[e.Id] == cell){
+								// var q = e.Query + ' LIMIT ' + e.Limit;
+								var q = e.Query;
+								var edge = e;
+									AJAXQuery(q, edge.Endpoint,
+										function(str){
+											// var msg = {text: str, query: edge.Query, limit: edge.Limit, endpoint: edge.Endpoint};
+											var msg = {text: str, query: edge.Query, endpoint: edge.Endpoint};
+											for(var V of collection){
+												V.processNotify(msg);
+											}
+											});
+								}
+							}
+						}
+					});
+				}
+				catch(err){
+					errorDiv.innerHTML = err.toString();
+				}
+				finally{
+					diagram.getModel().endUpdate();
+				}
+			}
+		}});
+		Object.defineProperty(GraphView.prototype, 'constructEdgestyle', {value:
+		//Contract: e is an Arrow object extracted, e.g., from a parsed internal JSON representation. Returns an mxEdgestyle which encodes the routing information for e, based on e.Waypoints, if that field is defined. Otherwise returns the default mxGraph elbow style.
+		function(e)
+		{	
+			var style;
+			if(e.Waypoints){
+				style = function(state,source,target,points,result){
+					for(var pt of e.Waypoints){
+						result.push(new mxPoint(pt[0],pt[1]));
+					}
+				}
+			}else{
+				style = mxEdgeStyle.ElbowConnector;
+			}
+			return style;
+		}});
+		//end GraphView subclass
+		
+		//PlainTextView subclass.
+		// function PlainTextView(collection, DOMNode){
+		// 	View.call(this, collection);
+		// 	this.DOMNode = DOMNode;
+		// }
+		// PlainTextView.prototype = Object.create(View.prototype);
+		// Object.defineProperty(PlainTextView.prototype, 'constructor', {value: PlainTextView, enumerable: false, writable: true,});
+		// PlainTextView.prototype.processNotify = function(msg)
+		// 	{this.DOMNode.innerHTML = msg.text;};
+		
+		
+		//end PlainTextView subclass
+		
+		//ListView subclass
+		//displays a list of clickable items
+		function ListView(collection, DOMNode){
+			View.call(this, collection);
+			this.DOMNode = DOMNode;
+			this.query = '';
+			// this.limit = 10;
+			this.endpoint = '';
+			// this.DOMNode.innerHTML = '<div></div><button>Load More Results</button>';
+			this.DOMNode.innerHTML = '<div></div>';
+		}
+		
+		ListView.prototype = Object.create(View.prototype);
+		
+		Object.defineProperty(ListView.prototype, 'constructor', {value: ListView, enumerable: false, writable: true,});
+		
+		Object.defineProperty(ListView.prototype, 'processJSONResults', {value: function(str)
+		{	
+			var div = this.DOMNode.getElementsByTagName("div")[0];
+			try{
+				input = JSON.parse(str);
+				div.innerHTML ='<ul>';
+				for(var result of input.results.bindings){
+					div.innerHTML = div.innerHTML + '<li> rdfs:label </li>';
+					div.innerHTML = div.innerHTML + result.x.value;
+					div.innerHTML = div.innerHTML + '<li> rdfs:comment </li>';
+					div.innerHTML = div.innerHTML + result.y.value;
+					div.innerHTML = div.innerHTML + '<li> dc:provenance </li>';
+					div.innerHTML = div.innerHTML + result.z.value;
+				}
+				div.innerHTML = div.innerHTML + '</ul>';
+			}
+			catch{
+				div.innerHTML = '<ul><li>Invalid or Missing Query Results Received!</li></ul>';
+			}
+		}});
+		
+		//Needs a query, for a single variable X. ListView will use the query to load more results if needed.
+		//By default ListView assumes any text passed to it is a text representation
+		//of JSON SPARQL query results for a query with a single variable X, and extract results.bindings.X.value
+		//fields from it.
+		ListView.prototype.processNotify = function(msg)
+			{
+				if(msg.text != undefined){
+					this.processJSONResults(msg.text);
+				}
+				//if the message has no text, then the ListView assumes it is supposed to run a new query.
+				else{
+					var thisref = this;
+					// AJAXQuery(msg.query + ' LIMIT ' + msg.limit, msg.endpoint, function(str){
+					AJAXQuery(msg.query, msg.endpoint, function(str){
+						thisref.processJSONResults(str);
+					});
+				}
+				this.query = msg.query;
+				// this.limit = msg.limit;
+				this.endpoint = msg.endpoint;
+				var thisref = this;
+				var tr = function(){
+					// trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint, limit:(2*thisref.limit)});
+					trigger(thisref.identifier, {query:thisref.query, endpoint:thisref.endpoint});
+				};
+				// window.onload = function() {
+				// 	this.DOMNode.getElementsByTagName('button')[0].onclick = tr;
+				// }
+			};
+			
+		//TreeView class
+		//root is some object, getChildren(node) is some function which takes an object and returns its children as an array; together these specify an abstract tree. It is the instantiator's responsibility to ensure this tree is not infinite. The TreeView displays this tree as an HTML tree. display() is some function that takes nodes of the abstract tree and converts them into strings to display.
+		function TreeView(collection, DOMNode, root, getChildren, display, action){
+			View.call(this, collection);
+			this.root = root;
+			this.getChildren = getChildren;
+			this.DOMNode = DOMNode;
+			this.display = display;
+			this.action = action;
+			this.setup(this.DOMNode, this.root, this.action);
+		}
+		
+		TreeView.prototype = Object.create(View.prototype);
+		
+		Object.defineProperty(TreeView.prototype, 'constructor', {value: TreeView, enumerable: false, writable: true,});
+		
+		//this method creates the TreeView's tree as HTML inside DOMNode and adds appropriate listeners to it.
+		Object.defineProperty(TreeView.prototype, 'setup', {value: function(DOMNode, root, action){
+			DOMNode.innerHTML = this.expand(root, true);
+			var expanders = DOMNode.getElementsByClassName("plusTreeView");
+			for (var ex of expanders){
+				ex.addEventListener("click", function(){
+					this.parentElement.querySelector(".nested").classList.toggle("active");
+					this.classList.toggle("minusTreeView");
+				});
+				ex.addEventListener("dblclick", function(){
+					action(this);
+				});
+			}
+		}
+		});
+		//this method takes an abstract tree node 'node' and returns the subtree rooted at 'node', in HTML form.
+		Object.defineProperty(TreeView.prototype, 'expand', {value: function(node, isRoot)
+		{	
+			var children = this.getChildren(node);
+			var ret;
+			if (children.length != 0){
+				ret = '<span class=\"plusTreeView\">' + this.display(node) + '</span>';
+				ret = ret + '<ul class=\"ulTreeView nested\">';
+				for(var child of children){
+					ret = ret + '<li>'+this.expand(child, false)+'</li>';
+				}
+				ret = ret + '</ul>';
+			}else{
+				ret = '<span>' + this.display(node) + '</span>';
+			}
+			return ret;
+		}});		
+
+		function textQuerySetup(query, endpoint, className){
+			var div = document.getElementById("textQueryDiv_" + className);
+			if(div){
+				div.addEventListener("click", function(){
+					AJAXQuery(query, endpoint, function(str){
+						var msg = {text: str, query: query, endpoint: endpoint};
+						for(var V of viewArray){
+							V.processNotify(msg);
+						}
+					});
+				});
+			}
+		}
+		//Contract: Query is a string. It is intended to be a SPARQL query, but that will be checked on the server. callback must be a function capable of taking a string argument. endpoint should be a URL to a SPARQL endpoint on which the query can be run. If the AJAX query terminates successfully, possibly after this function returns, callback() will be called on the response.
+		function AJAXQuery(query, endpoint, callback){
+			request = new XMLHttpRequest();
+			request.open('POST', '/query', true);
+			request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			request.send('query='+query+'&endpoint='+endpoint);
+
+			request.onreadystatechange = function(){
+				//alert('readystate changed, status'+this.status.toString());
+				if(this.readyState == 4 && this.status == 200){
+					//alert('Response received:'+request.responseText);
+					callback(request.responseText);
+				}
+			}
+
+		}
+		//this function is a hook for buttons and other HTML elements to access the view objects through their message bus.
+		function trigger(identifier, msg){
+			for (var view of viewArray){
+				if (view.identifier == identifier)
+				{
+					view.processNotify(msg);
+				}
+			}
+		}
+
+		function objectTest(){
+			var LV = new ListView(viewArray, document.getElementById('listDiv'));
+			endpoint = "http://cpd-fuseki.cs.ksu.edu/x-project-06-04/query";
+			classNames = ["cosmo:AbstractEntity", "cosmo:AtemporalRole", "cosmo:Part", "cosmo:Component", "spoke:CellularComponent", "kwg:FireDamageSeverity_DCD", "kwg:FireDamageSeverity_DCD.High", "kwg:FireDamageSeverity_DCD.Low", "kwg:FireDamageSeverity_DCD.Moderate", "kwg:FireDamageSeverity_DCD.NotRated", "cosmo:Artifact-Generic", "cosmo:ArtifactObject", "cosmo:ContainerArtifact", "cosmo:HumanOccupationConstruct", "cosmo:Building", "ufokn:Building", "ufokn:MultiUnitBuilding", "cosmo:OfficeBuilding", "ufokn:Office", "cosmo:InformationBearingObject", "scales:Document", "cosmo:Continuant", "cosmo:DependentContinuant", "cosmo:SpecificallyDependentContinuant", "cosmo:Attribute", "cosmo:Capability", "cosmo:Function", "spoke:MolecularFunction", "cosmo:AttributeValue", "cosmo:QualitativeAttributeValue", "cosmo:Artificial", "cosmo:ManMade", "ufokn:ManMade", "cosmo:PertainingAttributeValue", "cosmo:Military", "ufokn:Military", "cosmo:RealizableEntity", "cosmo:LegalAgent", "cosmo:JudicialAgent", "cosmo:Resource", "cosmo:InformationBearingThing", "cosmo:PropositionalConceptualWork", "cosmo:Specification", "cosmo:DevisedStructureActivity", "cosmo:Methodology", "cosmo:Geometry", "ufokn:Geometry", "kwg:Geometry", "kwg:MultiPolygon", "kwg:Point", "kwg:Polygon", "ufokn:Point", "ufokn:RiskPoint", "cosmo:Sign", "cosmo:SubstanceRole", "cosmo:Role", "cosmo:Feature", "ufokn:FeatureAtRisk", "ufokn:Amenity", "ufokn:Facility", "ufokn:Leisure", "ufokn:ManMade", "ufokn:Military", "ufokn:MultiUnitBuilding", "ufokn:Office", "ufokn:Shop", "ufokn:Sport", "ufokn:Tourism", "cosmo:GenericLabel", "cosmo:Address", "ufokn:Address", "cosmo:Agent", "scales:Agent", "cosmo:Anatomy", "spoke:Anatomy", "cosmo:BiochemicalCompound", "spoke:Compound", "cosmo:Building", "ufokn:MultiUnitBuilding", "cosmo:OfficeBuilding", "ufokn:Office", "cosmo:Component", "spoke:CellularComponent", "cosmo:Container", "scales:DocketEntryCollection", "scales:DocketEntry", "cosmo:Disease", "spoke:Disease", "cosmo:Division", "kwg:USClimateDivision", "cosmo:Facility-Generic", "cosmo:Amenity", "ufokn:Amenity", "cosmo:CommercialFacility", "cosmo:RetailStore", "cosmo:Shop", "ufokn:Shop", "ufokn:Facility", "cosmo:Feature", "ufokn:FeatureAtRisk", "ufokn:Leisure", "ufokn:ManMade", "ufokn:Military", "ufokn:Tourism", "cosmo:Fire", "kwg:Fire","kwg:WildFire", "kwg:ComplexFire", "kwg:OutOfAreaResponseFire", "kwg:PrescribedFire", "kwg:UnknownFire", "cosmo:Food", "spoke:Food", "cosmo:Function", "spoke:MolecularFunction", "cosmo:Gene", "spoke:Gene", "cosmo:InformationBearingObject", "scales:Document", "cosmo:Judge", "scales:Judge", "cosmo:Leisure", "ufokn:Leisure", "cosmo:ManMade", "ufokn:ManMade", "cosmo:Military", "ufokn:Military", "cosmo:MoleculeType", "spoke:CellType", "cosmo:Nutrient", "spoke:Nutrient", "cosmo:Organism", "spoke:Organism", "cosmo:Organization", "scales:Organization", "scales:Court", "cosmo:Person", "scales:Person", "cosmo:PhysiologicalProcess", "spoke:BiologicalProcess", "cosmo:Place", "kwg:Place", "kwg:USState", "cosmo:Protein", "spoke:Protein", "spoke:ProteinDomain", "spoke:ProteinFamily", "cosmo:Reaction", "spoke:Reaction", "cosmo:RoadWay", "ufokn:Road", "ufokn:ResidentialRoad", "ufokn:ServiceRoad", "scales:PartyRole", "cosmo:SideEffect", "spoke:SideEffect", "cosmo:SightSeeing", "ufokn:Tourism", "cosmo:Sport", "cosmo:Symptom", "spoke:Symptom", "cosmo:Unit", "kwg:SoilMapUnit", "ufokn:Sport", "cosmo:Idenitifier", "cosmo:Object", "cosmo:PhysicalObject", "cosmo:MicroscopicScaleObject","cosmo:ChemicalObject", "cosmo:AtomGroup", "cosmo:Molecule", "cosmo:DNAMolecule", "cosmo:GenericContainer", "cosmo:Container", "scales:DocketEntryCollection", "scales:DocketEntry", "cosmo:ObjectWithAttribute", "cosmo:FlatObject", "cosmo:Roadway", "ufokn:Road", "cosmo:SolidObject", "cosmo:MoistObject", "cosmo:GenericAgent", "cosmo:Suborgnization", "cosmo:PhysicalSubstance", "cosmo:BiologicallyActiveSubstance", "cosmo:ChemicallyDefinedSubstance", "cosmo:CarbonCompound", "cosmo:OrganicSubstance", "cosmo:MacroMolecularSubstance", "cosmo:GenericLocation", "cosmo:Individual", "cosmo:Scope", "cosmo:Context", "cosmo:Group", "cosmo:CompositeConcept", "cosmo:SituationProcessEventOrState", "cosmo:Event", "cosmo:Action", "cosmo:PurposefulAction", "cosmo:BecomingEvent", "cosmo:PhysicalTransformationEvent", "cosmo:Oxidation", "cosmo:Combustion", "kwg:WildAndFireUse", "cosmo:Effect", "cosmo:PersistentState", "cosmo:MentalState", "cosmo:SystemCondition", "cosmo:OrganismCondition", "cosmo:Topic", "cosmo:DomainOfKnowledge", "cosmo:FieldOfStudy", "cosmo:Science", "cosmo:Biology", "cosmo:Morphology", "cosmo:InheritableType", "cosmo:ObjectType", "cosmo:HumanRole"];
+			for (var i = 0; i < classNames.length; i++) {
+				className = classNames[i];
+				query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX kwg: <http://stko-roy.geog.ucsb.edu/lod/ontology/> PREFIX dc: <http://purl.org/dc/terms/> PREFIX spoke: <http://spoke/ontology/> PREFIX cosmo: <http://micra.com/COSMO/COSMO.owl#> PREFIX scales: <http://scales-okn.org/schema#> PREFIX ufokn: <http://schema.ufokn.org/core/v1/FeatureAtRisk#> SELECT ?x ?y ?z WHERE { " + className + " rdfs:label ?x ; rdfs:comment ?y ; dc:provenance ?z }";
+				textQuerySetup(query, endpoint, className);	
+			}
+		}
+
+	</script>
+</head>
+
+<body onload="objectTest()">
+	{% extends "base.html" %}
+    {% block content %}
+<div class="card-container" style="width: 99%;">
+	<div class="row">
+		<div class="col-md-6">
+			<div class="card scroll">
+				<div class="card-header">
+					<div class="card-title"><b>Class hierarchy</b></div>
+				</div>
+				<div class="card-body">
+				<ul class="listree">
+				    <li>
+				        <div class="listree-submenu-heading">owl:Thing</div>
+				        <ul class="listree-submenu-items">
+				        	<li>
+				                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:AbstractEntity">cosmo:AbstractEntity (<span style="color:green;">kwg: 6</span>; <span style="color:red;">spoke: 1</span>)</div>
+				                <ul class="listree-submenu-items">
+				                    <li>
+				                        <div class="listree-submenu-heading" id="textQueryDiv_cosmo:AtemporalRole">cosmo:AtemporalRole</div>
+				                        <ul class="listree-submenu-items">
+				                            <li>
+				                                 <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Part">cosmo:Part</div>
+				                                 <ul class="listree-submenu-items">
+						                            <li>
+						                                 <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Component">cosmo:Component</div>
+						                                 <ul class="listree-submenu-items">
+								                            <li>
+								                                 <div id="textQueryDiv_spoke:CellularComponent">spoke:CellularComponent</div>
+								                            </li>
+				                       					 </ul>
+						                            </li>
+						                            <li>
+						                                 <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Unit">cosmo:Unit</div>
+						                                 <ul class="listree-submenu-items">
+								                            <li>
+								                                 <div class="listree-submenu-heading" id="textQueryDiv_kwg:SoilMapUnit">kwg:SoilMapUnit</div>
+								                                 <ul class="listree-submenu-items">
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_kwg:FireDamageSeverity_DCD">kwg:FireDamageSeverity_DCD</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.High">kwg:FireDamageSeverity_DCD.High</div>
+												                            </li>
+												                            <li>
+												                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.Low">kwg:FireDamageSeverity_DCD.Low</div>
+												                            </li>
+												                            <li>
+												                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.Moderate">kwg:FireDamageSeverity_DCD.Moderate</div>
+												                            </li>
+												                            <li>
+												                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.NotRated">kwg:FireDamageSeverity_DCD.NotRated</div>
+												                            </li>
+								                       					</ul>
+										                            </li>
+						                       					</ul>
+								                            </li>
+				                       					</ul>
+						                            </li>
+		                       					</ul>
+				                            </li>
+				                        </ul>
+				                    </li>
+				                </ul>
+				            </li> 
+				            <li>
+				                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Artifact-Generic">cosmo:Artifact-Generic (<span style="color:darkgrey;">scales: 1</span>; <span style="color:blue;">ufokn: 3</span>)</div>
+				                <ul class="listree-submenu-items">
+				                    <li>
+				                        <div class="listree-submenu-heading" id="textQueryDiv_cosmo:ArtifactObject">cosmo:ArtifactObject</div>
+				                        <ul class="listree-submenu-items">
+				                            <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:ContainerArtifact">cosmo:ContainerArtifact</div>
+				                                <ul class="listree-submenu-items">
+						                            <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:HumanOccupationConstruct">cosmo:HumanOccupationConstruct</div>
+						                                <ul class="listree-submenu-items">
+								                            <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Building">cosmo:Building</div>
+								                                <ul class="listree-submenu-items">
+										                            <li>
+										                                <div id="textQueryDiv_ufokn:Building">ufokn:Building</div>
+										                            </li>
+										                            <li>
+										                                <div id="textQueryDiv_ufokn:MultiUnitBuilding">ufokn:MultiUnitBuilding</div>
+										                            </li>
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:OfficeBuilding">cosmo:OfficeBuilding</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div id="textQueryDiv_ufokn:Office">ufokn:Office</div>
+												                            </li>
+												                        </ul>
+										                            </li>
+						                       					</ul>
+								                            </li>
+				                       					</ul>
+						                            </li>
+						                        </ul>
+						                    </li>
+				                            <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:InformationBearingObject">cosmo:InformationBearingObject</div>
+				                                <ul class="listree-submenu-items">
+						                            <li>
+						                                <div id="textQueryDiv_scales:Document">scales:Document</div>
+						                            </li>
+		                       					</ul>
+				                            </li>
+				                        </ul>
+				                    </li>
+				                </ul>
+				            </li> 
+				            <li>
+				                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Continuant">cosmo:Continuant (<span style="color:green;">kwg: 4</span>; <span style="color:darkgrey;">scales: 4</span>; <span style="color:red;">spoke: 5</span>; <span style="color:blue;">ufokn: 18</span>)</div>
+				                <ul class="listree-submenu-items">
+				                    <li>
+				                        <div class="listree-submenu-heading" id="textQueryDiv_cosmo:DependentContinuant">cosmo:DependentContinuant</div>
+				                        <ul class="listree-submenu-items">
+				                            <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:SpecificallyDependentContinuant">cosmo:SpecificallyDependentContinuant</div>
+				                                <ul class="listree-submenu-items">
+						                            <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Attribute">cosmo:Attribute</div>
+						                                <ul class="listree-submenu-items">
+								                            <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Capability">cosmo:Capability</div>
+								                                <ul class="listree-submenu-items">
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Function">cosmo:Function</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                            	<div id="textQueryDiv_spoke:MolecularFunction">spoke:MolecularFunction</div>
+												                            </li>
+												                        </ul>
+										                            </li>
+										                        </ul>
+								                            </li>
+				                       					</ul>
+						                            </li>
+						                            <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:AttributeValue">cosmo:AttributeValue</div>
+						                                <ul class="listree-submenu-items">
+								                            <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:QualitativeAttributeValue">cosmo:QualitativeAttributeValue</div>
+								                                <ul class="listree-submenu-items">
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Artificial">cosmo:Artificial</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div class="listree-submenu-heading"id="textQueryDiv_cosmo:ManMade">cosmo:ManMade</div>
+												                                <ul class="listree-submenu-items">
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:ManMade">ufokn:ManMade</div>
+														                            </li>
+														                        </ul>
+												                            </li>
+												                        </ul>
+										                            </li>
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:PertainingAttributeValue">cosmo:PertainingAttributeValue</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div class="listree-submenu-heading"id="textQueryDiv_cosmo:Military">cosmo:Military</div>
+												                                <ul class="listree-submenu-items">
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Military">ufokn:Military</div>
+														                            </li>
+														                        </ul>
+												                            </li>
+												                        </ul>
+										                            </li>
+										                        </ul>
+								                            </li>
+				                       					</ul>
+						                            </li>
+						                            <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:RealizableEntity">cosmo:RealizableEntity</div>
+						                                <ul class="listree-submenu-items">
+								                            <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Role">cosmo:Role</div>
+								                                <ul class="listree-submenu-items">
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Feature">cosmo:Feature</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div class="listree-submenu-heading" id="textQueryDiv_ufokn:FeatureAtRisk">ufokn:FeatureAtRisk</div>
+												                                 <ul class="listree-submenu-items">    
+													                                <li>
+														                                <div id="textQueryDiv_ufokn:Amenity">ufokn:Amenity</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Building">ufokn:Building</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Facility">ufokn:Facility</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Leisure">ufokn:Leisure</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:ManMade">ufokn:ManMade</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Military">ufokn:Military</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:MultiUnitBuilding">ufokn:MultiUnitBuilding</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Office">ufokn:Office</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Shop">ufokn:Shop</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Sport">ufokn:Sport</div>
+														                            </li>
+														                            <li>
+														                                <div id="textQueryDiv_ufokn:Tourism">ufokn:Tourism</div>
+														                            </li>
+										                       					</ul>
+												                            </li>
+								                       					</ul>
+										                            </li>
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:LegalAgent">cosmo:LegalAgent</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:JudicialAgent">cosmo:JudicialAgent</div>
+												                                <ul class="listree-submenu-items">
+														                            <li>
+														                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Judge">cosmo:Judge</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div id="textQueryDiv_scales:Judge">scales:Judge</div>
+																                            </li>
+																                        </ul>
+														                            </li>
+										                       					</ul>
+												                            </li>
+												                        </ul>
+												                    </li>
+										                            <li>
+										                            	<div id="textQueryDiv_scales:PartyRole">scales:PartyRole</div>
+										                            </li>
+										                            <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Resource">cosmo:Resource</div>
+										                                <ul class="listree-submenu-items">
+												                            <li>
+												                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:InformationBearingThing">cosmo:InformationBearingThing</div>
+												                                <ul class="listree-submenu-items">
+														                            <li>
+														                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:PropositionalConceptualWork">cosmo:PropositionalConceptualWork</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Specification">cosmo:Specification</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:DevisedStructureActivity">cosmo:DevisedStructureActivity</div>
+																		                                <ul class="listree-submenu-items">
+																			                                <li>
+																				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Sport">cosmo:Sport</div>
+																				                                <ul class="listree-submenu-items">
+																					                                <li>
+																						                                <div id="textQueryDiv_ufokn:Sport">ufokn:Sport</div>
+																						                            </li>
+																					                        	</ul>
+																				                            </li>
+																			                        	</ul>
+																		                            </li>
+																	                        	</ul>
+																	                        </li>
+															                            	<li>
+															                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Methodology">cosmo:Methodology</div>
+															                                	<ul class="listree-submenu-items">
+																                                	<li>
+																	                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Geometry">cosmo:Geometry</div>
+																	                                	<ul class="listree-submenu-items">
+																	                                		<li>
+																		                                		<div id="textQueryDiv_ufokn:Geometry">ufokn:Geometry</div>
+																		                            		</li>
+																		                            		<li>
+																		                                		<div class="listree-submenu-heading" id="textQueryDiv_kwg:Geometry">kwg:Geometry</div>
+																		                                		<ul class="listree-submenu-items">
+																		                                			<li>
+																		                                				<div id="textQueryDiv_kwg:MultiPolygon">kwg:MultiPolygon</div>
+																		                                			</li>
+																		                                			<li>
+																		                                				<div id="textQueryDiv_kwg:Point">kwg:Point</div>
+																		                                			</li>
+																				                                	<li>
+																				                                		<div id="textQueryDiv_kwg:Polygon">kwg:Polygon</div>
+																				                                	</li>
+																			                                	</ul>
+																		                            		</li>
+																				                            <li>
+																			                                	<div id="textQueryDiv_ufokn:Point">ufokn:Point</div>
+																			                                </li>
+																			                                <li>
+																			                                	<div id="textQueryDiv_ufokn:RiskPoint">ufokn:RiskPoint</div>
+																			                                </li>
+																	                            		</ul>
+																	                            	</li>
+																                        		</ul>
+															                            	</li>
+										                       					 		</ul>
+												                            		</li>
+												                            	</ul>
+												                            </li>
+																			<li>
+												                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Sign">cosmo:Sign</div>
+												                                <ul class="listree-submenu-items">
+													                                <li>
+														                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:GenericLabel">cosmo:GenericLabel</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Idenitifier">cosmo:Idenitifier</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Address">cosmo:Address</div>
+																		                                <ul class="listree-submenu-items">
+																			                                <li>
+																				                                <div id="textQueryDiv_ufokn:Address">ufokn:Address</div>
+																				                            </li>
+																				                        </ul>
+																		                            </li>
+																	                        	</ul>
+																                            </li>
+															                        	</ul>
+															                        </li>
+														                            <li>
+														                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Symptom">cosmo:Symptom</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div id="textQueryDiv_spoke:Symptom">spoke:Symptom</div>
+																                            </li>
+															                        	</ul>
+														                            </li>
+										                      					</ul>
+												                            </li>
+								                       					</ul>
+										                            </li>
+										                            <li>
+										                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:SubstanceRole">cosmo:SubstanceRole</div>
+												                        <ul class="listree-submenu-items">
+												                            <li>
+												                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Food">cosmo:Food</div>
+												                                <ul class="listree-submenu-items">
+													                                <li>
+													                                	<div id="textQueryDiv_spoke:Food">spoke:Food</div>
+													                                </li>
+													                            </ul>
+												                            </li>
+												                        </ul>
+										                            </li>
+										                        </ul>
+										                    </li>
+								                        </ul>
+								                    </li>  
+		                       					 </ul>
+		                       				</li>
+		                       			</ul>
+				                    </li>
+					            	<li>
+					            		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Object">cosmo:Object</div>
+				                        <ul class="listree-submenu-items">
+				                            <li>
+				                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:PhysicalObject">cosmo:PhysicalObject</div>
+				                                <ul class="listree-submenu-items">
+					                                <li>
+					                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:MicroscopicScaleObject">cosmo:MicroscopicScaleObject</div>
+					                                	<ul class="listree-submenu-items">
+						                                	<li>
+						                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:ChemicalObject">cosmo:ChemicalObject</div>
+						                                		<ul class="listree-submenu-items">
+								                                	<li>
+								                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:AtomGroup">cosmo:AtomGroup</div>
+								                                		<ul class="listree-submenu-items">
+									                                		<li>
+									                                			<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Molecule">cosmo:Molecule</div>
+									                                			<ul class="listree-submenu-items">
+										                                			<li>
+										                                				<div class="listree-submenu-heading" id="textQueryDiv_cosmo:DNAMolecule">cosmo:DNAMolecule</div>
+										                                				<ul class="listree-submenu-items">
+											                                				<li>
+											                                					<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Gene">cosmo:Gene</div>
+											                                					<ul class="listree-submenu-items">
+												                                					<li>
+												                                						<div id="textQueryDiv_spoke:Gene">spoke:Gene</div>
+												                                					</li>
+										                            							</ul>
+											                                				</li>
+										                            					</ul>
+										                                			</li>
+									                            				</ul>
+									                                		</li>
+								                            			</ul>
+								                                	</li>
+							                            		</ul>
+						                                	</li>
+						                            	</ul>
+					                                </li>
+				                                </ul>
+				                            </li>
+				                            <li>
+				                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:GenericContainer">cosmo:GenericContainer</div>
+				                                <ul class="listree-submenu-items">
+					                                <li>
+					                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Container">cosmo:Container</div>
+					                                	<ul class="listree-submenu-items">
+							                                <li>
+							                                	<div class="listree-submenu-heading" id="textQueryDiv_scales:DocketEntryCollection">scales:DocketEntryCollection</div>
+							                                	<ul class="listree-submenu-items">
+									                                <li>
+									                                	<div id="textQueryDiv_scales:DocketEntry">scales:DocketEntry</div>
+									                                </li>
+								                            	</ul>
+								                            </li>
+							                        	</ul>
+							                        </li>
+						                    	</ul>
+						                    </li>
+						                    <li>
+						                    	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:ObjectWithAttribute">cosmo:ObjectWithAttribute</div>
+				                            	<ul class="listree-submenu-items">
+					                                <li>
+					                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:FlatObject">cosmo:FlatObject</div>
+					                                	<ul class="listree-submenu-items">
+							                                <li>
+							                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Roadway">cosmo:Roadway</div>
+							                                	<ul class="listree-submenu-items">
+									                                <li>
+									                                	<div class="listree-submenu-heading" id="textQueryDiv_ufokn:Road">ufokn:Road</div>
+									                                	<ul class="listree-submenu-items">
+											                                <li>
+											                                	<div id="textQueryDiv_ufokn:ResidentialRoad">ufokn:ResidentialRoad</div>
+											                                </li>
+											                                <li>
+											                                	<div id="textQueryDiv_ufokn:ServiceRoad">ufokn:ServiceRoad</div>
+											                                </li>
+								                            			</ul>
+									                                </li>
+							                            		</ul>
+							                                </li>
+					                            		</ul>
+					                                </li>
+				                                	<li>
+					                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:SolidObject">cosmo:SolidObject</div>
+					                                	<ul class="listree-submenu-items">
+							                                <li>
+							                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Facility-Generic">cosmo:Facility-Generic</div>
+							                                	<ul class="listree-submenu-items">
+									                                <li>
+									                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Amenity">cosmo:Amenity</div>
+									                                	<ul class="listree-submenu-items">
+											                                <li>
+											                                	<div id="textQueryDiv_ufokn:Amenity">ufokn:Amenity</div>
+											                                </li>
+										                            	</ul>
+										                            </li>
+									                                <li>
+									                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:CommercialFacility">cosmo:CommercialFacility</div>
+									                                	<ul class="listree-submenu-items">
+											                                <li>
+											                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:RetailStore">cosmo:RetailStore</div>
+											                                	<ul class="listree-submenu-items">
+													                                <li>
+													                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Shop">cosmo:Shop</div>
+													                                	<ul class="listree-submenu-items">
+															                                <li>
+															                                	<div id="textQueryDiv_ufokn:Shop">ufokn:Shop</div>
+															                                </li>
+														                            	</ul>
+													                                </li>
+												                            	</ul>
+											                                </li>
+											                                <li>
+											                                	<div id="textQueryDiv_ufokn:Facility">ufokn:Facility</div>
+											                                </li>
+										                            	</ul>
+									                                </li>
+						                            			</ul>
+						                            		</li>
+						                            		<li>
+								                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:MoistObject">cosmo:MoistObject</div>
+							                                	<ul class="listree-submenu-items">
+									                                <li>
+									                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Organism">cosmo:Organism</div>
+									                                	<ul class="listree-submenu-items">
+											                                <li>
+												                                <div id="textQueryDiv_spoke:Organism">spoke:Organism</div>
+												                            </li>
+											                        	</ul>
+										                            </li>
+							                            		</ul>
+							                                </li>
+			                            				</ul>
+		                                			</li>
+		                            			</ul>
+		                            		</li>
+	                        			</ul>
+			            			</li>
+			            		</ul>
+				            </li>
+				            <li>
+				            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:GenericAgent">cosmo:GenericAgent (<span style="color:green;">kwg: 1</span>; <span style="color:darkgrey;">scales: 2</span>; <span style="color:red;">spoke: 5</span>)</div>
+                            	<ul class="listree-submenu-items">
+	                                <li>
+	                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Organization">cosmo:Organization</div>
+	                                	<ul class="listree-submenu-items">
+			                                <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_scales:Organization">scales:Organization</div>
+				                                <ul class="listree-submenu-items">
+					                                <li>
+						                                <div id="textQueryDiv_scales:Court">scales:Court</div>
+						                            </li>
+					                        	</ul>
+				                            </li>
+				                            <li>
+			                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Suborgnization">cosmo:Suborgnization</div>
+			                                	<ul class="listree-submenu-items">
+					                                <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Division">cosmo:Division</div>
+						                                <ul class="listree-submenu-items">
+							                                <li>
+								                                <div id="textQueryDiv_kwg:USClimateDivision">kwg:USClimateDivision</div>
+								                            </li>
+							                        	</ul>
+						                            </li>
+					                        	</ul>
+				                            </li>
+			                        	</ul>
+		                            </li>
+		                            <li>
+	                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:PhysicalSubstance">cosmo:PhysicalSubstance</div>
+	                                	<ul class="listree-submenu-items">
+			                                <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:BiologicallyActiveSubstance">cosmo:BiologicallyActiveSubstance</div>
+				                                <ul class="listree-submenu-items">
+					                                <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Nutrient">cosmo:Nutrient</div>
+						                                <ul class="listree-submenu-items">
+							                                <li>
+								                                <div id="textQueryDiv_spoke:Nutrient">spoke:Nutrient</div>
+								                            </li>
+							                        	</ul>
+						                            </li>
+					                        	</ul>
+				                            </li>
+				                            <li>
+			                                	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:ChemicallyDefinedSubstance">cosmo:ChemicallyDefinedSubstance</div>
+			                                	<ul class="listree-submenu-items">
+					                                <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:CarbonCompound">cosmo:CarbonCompound</div>
+						                                <ul class="listree-submenu-items">
+							                                <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:BiochemicalCompound">cosmo:BiochemicalCompound</div>
+								                                <ul class="listree-submenu-items">
+									                                <li>
+										                                <div id="textQueryDiv_spoke:Compound">spoke:Compound</div>
+										                            </li>
+									                        	</ul>
+								                            </li>
+							                        	</ul>
+						                            </li>
+					                        	</ul>
+				                            </li>
+				                            <li>
+				                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:OrganicSubstance">cosmo:OrganicSubstance</div>
+			                                	<ul class="listree-submenu-items">
+					                                <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:MacroMolecularSubstance">cosmo:MacroMolecularSubstance</div>
+						                                <ul class="listree-submenu-items">
+							                                <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Protein">cosmo:Protein</div>
+								                                <ul class="listree-submenu-items">
+									                                <li>
+										                                <div id="textQueryDiv_spoke:Protein">spoke:Protein</div>
+										                            </li>
+										                            <li>
+										                                <div id="textQueryDiv_spoke:ProteinDomain">spoke:ProteinDomain</div>
+										                            </li>
+										                            <li>
+										                                <div id="textQueryDiv_spoke:ProteinFamily">spoke:ProteinFamily</div>
+										                            </li>
+									                        	</ul>
+								                            </li>
+							                        	</ul>
+						                            </li>
+					                        	</ul>
+					                        </li>
+			                        	</ul>
+		                            </li>
+                        		</ul>
+				            </li>
+				            <li>
+				            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:GenericLocation">cosmo:GenericLocation (<span style="color:green;">kwg: 2</span>)</div>
+                                <ul class="listree-submenu-items">
+	                                <li>
+		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Place">cosmo:Place</div>
+			                            <ul class="listree-submenu-items">
+			                                <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_kwg:Place">kwg:Place</div>
+						                        <ul class="listree-submenu-items">
+					                                <li>
+						                                <div id="textQueryDiv_kwg:USState">kwg:USState</div>
+						                            </li>
+					                        	</ul>
+				                            </li>
+			                        	</ul>
+		                            </li>
+	                        	</ul>
+				            </li>
+				            <li>
+				            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Individual">cosmo:Individual (<span style="color:green;">kwg: 12</span>; <span style="color:red;">spoke: 5</span>; <span style="color:blue;">ufokn: 2</span>)</div>
+                                <ul class="listree-submenu-items">
+	                                <li>
+		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Scope">cosmo:Scope</div>
+			                            <ul class="listree-submenu-items">
+			                                <li>
+				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Context">cosmo:Context</div>
+						                        <ul class="listree-submenu-items">
+					                                <li>
+						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Group">cosmo:Group</div>
+						                                <ul class="listree-submenu-items">
+							                                <li>
+								                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:CompositeConcept">cosmo:CompositeConcept</div>
+								                                <ul class="listree-submenu-items">
+									                                <li>
+										                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:SituationProcessEventOrState">cosmo:SituationProcessEventOrState</div>
+										                                <ul class="listree-submenu-items">
+											                                <li>
+												                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Event">cosmo:Event</div>
+												                                <ul class="listree-submenu-items">
+													                                <li>
+														                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Action">cosmo:Action</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:PurposefulAction">cosmo:PurposefulAction</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:SightSeeing">cosmo:SightSeeing</div>
+																		                                <ul class="listree-submenu-items">
+																			                                <li>
+																				                                <div id="textQueryDiv_ufokn:Tourism">ufokn:Tourism</div>
+																				                            </li>
+																			                        	</ul>
+																		                            </li>
+																	                        	</ul>
+																                            </li>
+																                            <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Reaction">cosmo:Reaction</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div id="textQueryDiv_spoke:Reaction">spoke:Reaction</div>
+																		                            </li>
+																	                        	</ul>
+																                            </li>
+															                        	</ul>
+														                            </li>
+														                            <li>
+														                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:BecomingEvent">cosmo:BecomingEvent</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:PhysicalTransformationEvent">cosmo:PhysicalTransformationEvent</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Oxidation">cosmo:Oxidation</div>
+																		                                <ul class="listree-submenu-items">
+																			                                <li>
+																				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Combustion">cosmo:Combustion</div>
+																				                                <ul class="listree-submenu-items">
+																					                                <li>
+																						                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Fire">cosmo:Fire</div>
+																						                                <ul class="listree-submenu-items">
+																							                                <li>
+																								                                <div class="listree-submenu-heading" id="textQueryDiv_kwg:Fire">kwg:Fire</div>
+																								                                <ul class="listree-submenu-items">
+																									                                <li>
+																										                                <div id="textQueryDiv_kwg:ComplexFire">kwg:ComplexFire</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:OutOfAreaResponseFire">kwg:OutOfAreaResponseFire</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:PrescribedFire">kwg:PrescribedFire</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:UnknownFire">kwg:UnknownFire</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:WildAndFireUse">kwg:WildAndFireUse</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:WildFire">kwg:WildFire</div>
+																										                            </li>
+																									                        	</ul>
+																								                            </li>
+																								                            <li>
+																								                                <div class="listree-submenu-heading" id="textQueryDiv_kwg:FireDamageSeverity_DCD">kwg:FireDamageSeverity_DCD</div>
+																								                                <ul class="listree-submenu-items">
+																									                                <li>
+																										                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.High">kwg:FireDamageSeverity_DCD.High</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.Low">kwg:FireDamageSeverity_DCD.Low</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.Moderate">kwg:FireDamageSeverity_DCD.Moderate</div>
+																										                            </li>
+																										                            <li>
+																										                                <div id="textQueryDiv_kwg:FireDamageSeverity_DCD.NotRated">kwg:FireDamageSeverity_DCD.NotRated</div>
+																										                            </li>
+																									                        	</ul>
+																								                            </li>
+																							                        	</ul>
+																						                            </li>
+																					                        	</ul>
+																				                            </li>
+																			                        	</ul>
+																		                            </li>
+																	                        	</ul>
+																                            </li>
+															                        	</ul>
+														                            </li>
+														                            <li>
+														                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Effect">cosmo:Effect</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:SideEffect">cosmo:SideEffect</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div id="textQueryDiv_spoke:SideEffect">spoke:SideEffect</div>
+																		                            </li>
+																		                        </ul>
+																                            </li>
+																                        </ul>
+														                            </li>
+														                            <li>
+														                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:PersistentState">cosmo:PersistentState</div>
+														                                <ul class="listree-submenu-items">
+															                                <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:MentalState">cosmo:MentalState</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Leisure">cosmo:Leisure</div>
+																		                                <ul class="listree-submenu-items">
+																			                                <li>
+																				                                <div id="textQueryDiv_ufokn:Leisure">ufokn:Leisure</div>
+																				                            </li>
+																				                        </ul>
+																		                            </li>
+																		                        </ul>
+																                            </li>
+																                            <li>
+																                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:SystemCondition">cosmo:SystemCondition</div>
+																                                <ul class="listree-submenu-items">
+																	                                <li>
+																		                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:OrganismCondition">cosmo:OrganismCondition</div>
+																		                                <ul class="listree-submenu-items">
+																			                                <li>
+																				                                <div class="listree-submenu-heading" id="textQueryDiv_cosmo:Disease">cosmo:Disease</div>
+																				                                <ul class="listree-submenu-items">
+																					                                <li>
+																						                                <div id="textQueryDiv_spoke:Disease">spoke:Disease</div>
+																						                            </li>
+																						                        </ul>
+																				                            </li>
+																				                        </ul>
+																		                            </li>
+																		                        </ul>
+																                            </li>
+																                        </ul>
+														                            </li>
+														                            <li>
+														                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:PhysiologicalProcess">cosmo:PhysiologicalProcess</div>
+														                                <ul class="listree-submenu-items">
+														                                	<li>
+														                                		<div id="textQueryDiv_spoke:BiologicalProcess">spoke:BiologicalProcess</div>
+														                                	</li>
+														                                </ul>
+														                            </li>
+													                        	</ul>
+												                            </li>
+											                        	</ul>
+										                            </li>
+									                        	</ul>
+								                            </li>
+							                        	</ul>
+						                            </li>
+						                            <li>
+						                            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Topic">cosmo:Topic</div>
+						                                <ul class="listree-submenu-items">
+						                                	<li>
+						                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:DomainOfKnowledge">cosmo:DomainOfKnowledge</div>
+								                                <ul class="listree-submenu-items">
+								                                	<li>
+								                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:FieldOfStudy">cosmo:FieldOfStudy</div>
+								                                		<ul class="listree-submenu-items">
+										                                	<li>
+										                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Science">cosmo:Science</div>
+										                                		<ul class="listree-submenu-items">
+												                                	<li>
+												                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Biology">cosmo:Biology</div>
+												                                		<ul class="listree-submenu-items">
+														                                	<li>
+														                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Morphology">cosmo:Morphology</div>
+														                                		<ul class="listree-submenu-items">
+																                                	<li>
+																                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Anatomy">cosmo:Anatomy</div>
+																                                		<ul class="listree-submenu-items">
+																		                                	<li>
+																		                                		<div id="textQueryDiv_spoke:Anatomy">spoke:Anatomy</div>
+																		                                	</li>
+																		                                </ul>
+																                                	</li>
+																                                </ul>
+														                                	</li>
+														                                </ul>
+												                                	</li>
+												                                </ul>
+										                                	</li>
+										                                </ul>
+								                                	</li>
+								                                </ul>
+						                                	</li>
+						                                </ul>
+						                            </li>
+					                        	</ul>
+				                            </li>
+			                        	</ul>
+		                            </li>
+	                        	</ul>
+				            </li>
+				            <li>
+				            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:InheritableType">cosmo:InheritableType (<span style="color:red;">spoke: 1</span>)</div>
+                        		<ul class="listree-submenu-items">
+                                	<li>
+                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:ObjectType">cosmo:ObjectType</div>
+                                		<ul class="listree-submenu-items">
+		                                	<li>
+		                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:MoleculeType">cosmo:MoleculeType</div>
+		                                		<ul class="listree-submenu-items">
+				                                	<li>
+				                                		<div id="textQueryDiv_spoke:CellType">spoke:CellType</div>
+				                                	</li>
+				                                </ul>
+		                                	</li>
+		                                </ul>
+                                	</li>
+                                </ul>
+				            </li>
+				            <li>
+				            	<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Person">cosmo:Person (<span style="color:darkgrey;">scales: 3</span>)</div>
+                        		<ul class="listree-submenu-items">
+                                	<li>
+                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:HumanRole">cosmo:HumanRole</div>
+                                		<ul class="listree-submenu-items">
+		                                	<li>
+		                                		<div class="listree-submenu-heading" id="textQueryDiv_cosmo:Agent">cosmo:Agent</div>
+		                                		<ul class="listree-submenu-items">
+				                                	<li>
+				                                		<div id="textQueryDiv_scales:Agent">scales:Agent</div>
+				                                	</li>
+				                                </ul>
+		                                	</li>
+		                                </ul>
+                                	</li>
+                                	<li>
+                                		<div class="listree-submenu-heading" id="textQueryDiv_scales:Person">scales:Person</div>
+                                		<ul class="listree-submenu-items">
+		                                	<li>
+												<div id="textQueryDiv_scales:Judge">scales:Judge</div>
+		                                	</li>
+		                                </ul>
+                                	</li>
+                                </ul>
+				            </li>
+				    	</ul> 
+				    </li>
+				</ul>
+			</div>
+		</div>
+		<script src="https://unpkg.com/listree/dist/listree.umd.min.js"></script>
+		<script>
+    		listree();
+		</script>
+		</div>
+		<div class="col-md-6">			
+			<div class="card scroll">
+				<div class="card-header">
+					<div class="card-title"><b>Annotation</b></div>
+				</div>
+				<div class="card-body">
+				<div id="listDiv"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+    {% endblock %}
+</body>
+</html>

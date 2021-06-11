@@ -341,7 +341,8 @@
 
 
 <body onload="objectTest()">
-
+    {% extends "base.html" %}
+    {% block content %}
 <div id="errorDiv"></div>
 <div id="statusDiv"></div>
 <div id="plainTextDiv"></div>
@@ -360,5 +361,6 @@ style="width:500px;height:500px;"></iframe> -->
 	<label>Look up a Schema Diagram:</label>
 	<input type="text" id="schemaAddress" style="width:500px;"></input>
 </form>
+    {% endblock %}
 </body>
 </html>

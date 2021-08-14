@@ -1,26 +1,33 @@
-Most of the files in this repo can be safely ignored!
-The only ones that matter as far as code goes are:
-sdbrowser/__init__.py
-sdbrowser/templates/client.html
+Overview:
+------
+This repo includes combined code for InkBrowser and the KnowWhereGraph (KWG) Cross-Project Demonstrator.
+InkBrowser is a knowledge graph browser with a visual component.
+KWG Cross-Project Demonstrator is ???
 
-In addition, sdbrowser/templates/schema1.json is a readable example of the internal schema format (only need to know if you are creating schema diagrams.)
+The project is built using Python webapp framework Flask (flask.palletsprojects.com) and Javascript graph rendering library mxGraph (jgraph.github.io/mxgraph/)
 
-In __init__.py:
-Only the client() and query() functions matter now. The rest is left over from testing and I will eventually delete it. __init__.py is effectively finished.
 
-In client.html:
-This file is in more of a state of flux. Not everything is exactly as depicted in the architecture diagram (yet).
+Important Files:
+--------
+<code>sdbrowser/__init__.py</code> - contains the main code for the Flask server. 
+<code>sdbrowser/templates/client.html</code> - contains the bulk of the Javascript code for the browser.
+<code>sdbrowser/templates/graphView.html</code> - contains the Javascript code specifically supporting the visual browsing component.
 
-Things that can be expected to remain static:
-The View class. The GraphView subclass illustrates the conventional boilerplate for (old-style) Javascript subclass creation.
+Other Points of Interest:
+------
+InkBrowser uses a JSON format to store ontology schema diagrams - which are used to navigate through a knowledge graph by a point-and-click interface. The JSON format 
+specifies the geometric layout and style of the diagram as well as its action when clicked, in the form of SPARQL queries to be run against a SPARQL endpoint.
+sdbrowser/templates/schema1.json is a readable example of the internal schema format (only need to know if you are creating schema diagrams.)
+
+The Javascript class View: This is used for various user interfaces.
 
 Implementing a new View subclass:
 The constructor must take "collection" as its first argument. Then it can have additional arguments (e.g. DOMNode). If it is supposed to respond to messages from other views, this must be done by implementing the processNotify() function (this should have a single parameter expecting a Javascript Object, but it doesn't yet); to
-pass information *to* the other views, you do something like (...create message object M...); for(var v of collection){v.processNotify(M)};
+pass information *to* the other views, you do something like <code>(...create message object M...); for(var v of collection){v.processNotify(M)};</code>
 
 NOTE: InkBrowser's existing code uses old-style plain Javascript subclasses, not ECMAScript 2015 classes, etc. I do not make any guarantees about compatibility with new Javascript features other than guarantees they themselves make. The basic pattern for making a subclass of View, the old-fashioned way, is the following (all text in <<<>>> is placeholder text):
 
-function <<<MyView>>>(collection, <<<additional arguments>>>){
+<code>function <<<MyView>>>(collection, <<<additional arguments>>>){
 			View.call(this, collection);
 			[[[for each additional argument:]]]
 			this.<<<argument>>> = <<<argument>>>;
@@ -40,7 +47,7 @@ function <<<MyView>>>(collection, <<<additional arguments>>>){
 		<<<MyView>>>.prototype.<<<methodName>>> = function(<<<arguments>>>)
 			{<<<new code>>>};
 		
-		
+</code>
 		
 		
 		
